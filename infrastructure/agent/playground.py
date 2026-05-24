@@ -178,7 +178,7 @@ def chat_fn(message, history, user_api_key):
             provider_info = "🍃 *Running on Free Hugging Face Serverless API (Qwen 2.5 Coder 7B)*"
             
         agent = create_tool_calling_agent(llm, tools, prompt)
-        agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
+        agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=False)
         
         chat_history = []
         for h in history:
