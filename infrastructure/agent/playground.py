@@ -46,9 +46,9 @@ import httpx
 import json
 import pandas as pd
 from langchain_openai import ChatOpenAI
-from langchain.agents import create_tool_calling_agent
+from langchain.agents import create_tool_calling_agent, create_react_agent
 from langchain.agents import AgentExecutor
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder, PromptTemplate
 from langchain_core.tools import tool
 from dotenv import load_dotenv
 
@@ -132,6 +132,37 @@ prompt = ChatPromptTemplate.from_messages([
     MessagesPlaceholder(variable_name="agent_scratchpad"),
 ])
 
+# --- ReAct Prompt for Free Llama 3.3 Model ---
+react_template = """You are Episteme AI, an advanced bare-metal scientific assistant.
+Use the provided tools (including matrix, HDF5, expression simplification, and Brent solvers) to fulfill requests with maximum scientific accuracy.
+
+IMPORTANT: Do NOT write raw Python code blocks or use '<|python_tag|>'. If a scientific operation (matrix calculation, root-finding/solving, constant retrieval, unit conversion, simulation) is needed, you MUST call the appropriate tool from the list below.
+
+You have access to the following tools:
+
+{tools}
+
+Use the following format:
+
+Question: the input question you must answer
+Thought: you should always think about what to do
+Action: the action to take, should be one of [{tool_names}]
+Action Input: the input to the action
+Observation: the result of the action
+... (this Thought/Action/Action Input/Observation can repeat N times)
+Thought: I now know the final answer
+Final Answer: the final answer to the original input question
+
+Conversation History:
+{chat_history}
+
+Begin!
+
+Question: {input}
+Thought:{agent_scratchpad}"""
+
+react_prompt = PromptTemplate.from_template(react_template)
+
 # --- UI Functions ---
 def get_metrics():
     res = client.call("tools/call", {"name": "get_server_metrics", "arguments": {}})
@@ -155,6 +186,9 @@ def chat_fn(message, history, user_api_key):
             # Paid Override: Custom OpenAI API Key -> Use GPT-4o-mini
             llm = ChatOpenAI(model="gpt-4o-mini", temperature=0, openai_api_key=user_api_key)
             provider_info = "⚡ *Running on OpenAI GPT-4o-mini (paid key override)*"
+            agent = create_tool_calling_agent(llm, tools, prompt)
+            agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=False)
+            is_react = False
         else:
             # Free Mode: Use Llama-3.3-70B on Hugging Face Serverless API
             hf_token = user_api_key if user_api_key.startswith("hf_") else os.getenv("HF_TOKEN", "")
@@ -176,9 +210,9 @@ def chat_fn(message, history, user_api_key):
                 temperature=0
             )
             provider_info = "🍃 *Running on Free Hugging Face Serverless API (Llama 3.3 70B)*"
-            
-        agent = create_tool_calling_agent(llm, tools, prompt)
-        agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=False)
+            agent = create_react_agent(llm, tools, react_prompt)
+            agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=False)
+            is_react = True
         
         chat_history = []
         for h in history:
@@ -202,7 +236,13 @@ def chat_fn(message, history, user_api_key):
                 chat_history.append(("assistant", content))
             
         # Invoke agent
-        response = agent_executor.invoke({"input": message, "chat_history": chat_history}, config={"callbacks": []})
+        if is_react:
+            react_history_str = ""
+            for role_name, content_text in chat_history:
+                react_history_str += f"{role_name.capitalize()}: {content_text}\n"
+            response = agent_executor.invoke({"input": message, "chat_history": react_history_str}, config={"callbacks": []})
+        else:
+            response = agent_executor.invoke({"input": message, "chat_history": chat_history}, config={"callbacks": []})
         return f"{provider_info}\n\n{response['output']}"
     except Exception as e:
         return f"❌ **Execution Error**: {str(e)}"
