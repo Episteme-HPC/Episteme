@@ -156,12 +156,12 @@ def chat_fn(message, history, user_api_key):
             llm = ChatOpenAI(model="gpt-4o-mini", temperature=0, openai_api_key=user_api_key)
             provider_info = "⚡ *Running on OpenAI GPT-4o-mini (paid key override)*"
         else:
-            # Free Mode: Use Qwen-2.5-Coder-32B on Hugging Face Serverless API
+            # Free Mode: Use Llama-3.3-70B on Hugging Face Serverless API
             hf_token = user_api_key if user_api_key.startswith("hf_") else os.getenv("HF_TOKEN", "")
             if not hf_token:
                 return (
                     "⚠️ **Authentication Token Required**:\n\n"
-                    "To run the free open-source model (Qwen 2.5 Coder 32B), a **Hugging Face Access Token** is required.\n\n"
+                    "To run the free open-source model (Llama 3.3 70B), a **Hugging Face Access Token** is required.\n\n"
                     "👉 **How to get one (100% Free & Takes 10 Seconds)**:\n"
                     "1. Go to your Hugging Face Access Tokens page: https://huggingface.co/settings/tokens\n"
                     "2. Click **Create new token**, set the role to **Read** (or use your existing Write token), name it, and click **Create**.\n"
@@ -170,12 +170,12 @@ def chat_fn(message, history, user_api_key):
                 )
             
             llm = ChatOpenAI(
-                model="Qwen/Qwen2.5-Coder-7B-Instruct",
+                model="meta-llama/Llama-3.3-70B-Instruct:together",
                 base_url="https://router.huggingface.co/v1",
                 openai_api_key=hf_token,
                 temperature=0
             )
-            provider_info = "🍃 *Running on Free Hugging Face Serverless API (Qwen 2.5 Coder 7B)*"
+            provider_info = "🍃 *Running on Free Hugging Face Serverless API (Llama 3.3 70B)*"
             
         agent = create_tool_calling_agent(llm, tools, prompt)
         agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=False)
@@ -202,7 +202,7 @@ def chat_fn(message, history, user_api_key):
                 chat_history.append(("assistant", content))
             
         # Invoke agent
-        response = agent_executor.invoke({"input": message, "chat_history": chat_history})
+        response = agent_executor.invoke({"input": message, "chat_history": chat_history}, config={"callbacks": []})
         return f"{provider_info}\n\n{response['output']}"
     except Exception as e:
         return f"❌ **Execution Error**: {str(e)}"
@@ -320,7 +320,7 @@ with gr.Blocks(title="Episteme Scientific Playground") as demo:
                     <div class="premium-card">
                         <h3>🔗 Tokenless Free Mode</h3>
                         <p style="font-size: 0.88rem; line-height: 1.5; margin: 0 0 10px 0;">
-                            This Space runs the state-of-the-art open-source model <strong>(Qwen 2.5 Coder 32B)</strong>, hosted for free on Hugging Face Serverless.
+                            This Space runs the state-of-the-art open-source model <strong>(Llama 3.3 70B)</strong>, hosted for free on Hugging Face Serverless.
                         </p>
                         <ol style="font-size: 0.82rem; padding-left: 15px; margin: 0; line-height: 1.4;">
                             <li>Generate a free token at <a href="https://huggingface.co/settings/tokens" target="_blank" style="color: var(--primary-600); text-decoration: underline;">HF Access Tokens</a>.</li>
@@ -404,7 +404,7 @@ with gr.Blocks(title="Episteme Scientific Playground") as demo:
                 <div class="premium-card">
                     <h3>🔑 API Key &amp; Authentication Setup</h3>
                     <p style="font-size: 0.9rem; line-height: 1.5; margin: 0 0 12px 0;">
-                        By default, this Space runs the state-of-the-art open-source model <strong>Qwen 2.5 Coder 32B</strong> for free using the Hugging Face Serverless API.
+                        By default, this Space runs the state-of-the-art open-source model <strong>Llama 3.3 70B</strong> for free using the Hugging Face Serverless API.
                     </p>
                     <p style="font-size: 0.9rem; line-height: 1.5; margin: 0 0 15px 0;">
                         If you want to use a paid OpenAI model (like <strong>GPT-4o-mini</strong>) or use your own Hugging Face token, you can configure it below. Your credentials are only used for your current session and are never saved on the server.
