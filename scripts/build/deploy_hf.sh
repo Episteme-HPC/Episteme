@@ -50,6 +50,7 @@ git add episteme-social/
 git add episteme-native/
 git add agent/
 git add docker/
+git add libs/mpi.jar
 git add libs/mpj.jar
 
 # Remove heavy 3D models and textures rejected by Hugging Face
