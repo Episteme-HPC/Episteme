@@ -34,6 +34,10 @@ cp -r infrastructure/agent agent
 cp -r infrastructure/docker docker
 cp infrastructure/docker/Dockerfile.huggingface Dockerfile
 
+# Modify pom.xml on the deployment branch to only include the active modules
+echo -e "\033[0;33mRewriting pom.xml to only include active modules...\033[0m"
+python3 -c "import sys; p=open('pom.xml','r').read(); import re; p=re.sub(r'(?s)<modules>.*?</modules>', '  <modules>\\n    <module>episteme-core</module>\\n    <module>episteme-natural</module>\\n    <module>episteme-social</module>\\n    <module>episteme-native</module>\\n    <module>episteme-server</module>\\n  </modules>', p); open('pom.xml','w').write(p)"
+
 git add .gitattributes
 git add Dockerfile
 git add pom.xml

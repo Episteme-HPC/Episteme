@@ -30,6 +30,16 @@ Copy-Item -Path "infrastructure/agent" -Destination "agent" -Recurse -Force
 Copy-Item -Path "infrastructure/docker" -Destination "docker" -Recurse -Force
 Copy-Item -Path "infrastructure/docker/Dockerfile.huggingface" -Destination "Dockerfile" -Force
 
+# Modify pom.xml on the deployment branch to only include the active modules
+Write-Host "Rewriting pom.xml to only include active modules..." -ForegroundColor Yellow
+(Get-Content pom.xml -Raw) -replace '(?s)<modules>.*?</modules>', '  <modules>
+    <module>episteme-core</module>
+    <module>episteme-natural</module>
+    <module>episteme-social</module>
+    <module>episteme-native</module>
+    <module>episteme-server</module>
+  </modules>' | Set-Content pom.xml
+
 git add .gitattributes
 git add Dockerfile
 git add pom.xml
