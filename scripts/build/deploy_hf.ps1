@@ -59,7 +59,7 @@ git commit -m "deploy: industrial lean build for Hugging Face Spaces"
 
 # 6. Push to Hugging Face
 Write-Host "Pushing to Hugging Face..." -ForegroundColor Green
-git push $HF_REMOTE $DEPLOY_BRANCH:main --force
+git push $HF_REMOTE "${DEPLOY_BRANCH}:main" --force
 
 # 7. Cleanup and return to main branch
 Write-Host "Cleaning up..." -ForegroundColor Yellow
