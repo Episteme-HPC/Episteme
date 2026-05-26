@@ -267,8 +267,10 @@ def get_metrics():
            f"{memory} MB", \
            f"{ops:.2f} ms" if isinstance(ops, float) else f"{ops} ms"
 
-def chat_fn(message, history, user_api_key):
+def chat_fn(message, history, user_api_key, routing_model):
     user_api_key = user_api_key.strip() if user_api_key else ""
+    if not routing_model:
+        routing_model = "meta-llama/Llama-3.3-70B-Instruct:fastest"
     
     try:
         if user_api_key.startswith("sk-"):
@@ -279,7 +281,7 @@ def chat_fn(message, history, user_api_key):
             agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=False)
             is_react = False
         else:
-            # Free Mode: Use Llama-3.3-70B on Hugging Face Serverless API
+            # Free Mode: Use chosen routing model on Hugging Face Serverless API
             hf_token = user_api_key if user_api_key.startswith("hf_") else os.getenv("HF_TOKEN", "")
             if not hf_token:
                 return (
@@ -292,13 +294,24 @@ def chat_fn(message, history, user_api_key):
                     "*(Tip: To log in permanently, add a Secret named `HF_TOKEN` in your Hugging Face Space settings!)*"
                 )
             
+            # Map model name and provider suffix for clean UI display
+            provider_suffix = "Fastest"
+            model_display_name = "Llama 3.3 70B"
+            if ":" in routing_model:
+                parts = routing_model.split(":")
+                provider_suffix = parts[1].capitalize()
+                if "qwen" in parts[0].lower():
+                    model_display_name = "Qwen 2.5 72B"
+                elif "mistral" in parts[0].lower():
+                    model_display_name = "Mistral Large 2"
+            
             llm = ChatOpenAI(
-                model="meta-llama/Llama-3.3-70B-Instruct:fastest",
+                model=routing_model,
                 base_url="https://router.huggingface.co/v1",
                 openai_api_key=hf_token,
                 temperature=0
             )
-            provider_info = "🍃 *Running on Free Hugging Face Serverless API (Llama 3.3 70B)*"
+            provider_info = f"🍃 *Running on Free Hugging Face Serverless API ({model_display_name} - Provider: {provider_suffix})*"
             agent = create_react_agent(llm, tools, react_prompt)
             agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=False)
             is_react = True
@@ -406,6 +419,7 @@ with gr.Blocks(title="Episteme Scientific Playground") as demo:
     # Using gr.State avoids rendering the Textbox twice (ChatInterface
     # would auto-render additional_inputs, causing DuplicateBlockError).
     api_key_state = gr.State(value="")
+    routing_state = gr.State(value="meta-llama/Llama-3.3-70B-Instruct:fastest")
     # Compact Title Section for iframe compatibility
     gr.HTML("""
         <div style="text-align: center; padding: 10px 0; margin-bottom: 5px;">
@@ -463,7 +477,7 @@ with gr.Blocks(title="Episteme Scientific Playground") as demo:
         with gr.TabItem("🤖 Agentic Assistant"):
             gr.ChatInterface(
                 chat_fn,
-                additional_inputs=[api_key_state],
+                additional_inputs=[api_key_state, routing_state],
                 examples=[
                     ["Perform a high-performance matrix multiplication between Matrix A [[1, 2], [3, 4]] and Matrix B [[5, 6], [7, 8]] using the bare-metal Java FFM FPU kernel."],
                     ["Find the root for the scientific equation cos(x) - x = 0 between 0 and 1 using the native numerical Brent solver."],
@@ -539,7 +553,51 @@ with gr.Blocks(title="Episteme Scientific Playground") as demo:
                         If you want to use a paid OpenAI model (like <strong>GPT-4o-mini</strong>) or use your own Hugging Face token, you can configure it below. Your credentials are only used for your current session and are never saved on the server.
                     </p>
                 </div>
+                
+                <div class="premium-card">
+                    <h3>🌐 Hugging Face Serverless AI Router</h3>
+                    <p style="font-size: 0.9rem; line-height: 1.5; margin: 0 0 10px 0;">
+                        The free model uses Hugging Face's serverless router. By default, it routes dynamically to the fastest active provider (like SambaNova or Groq). You can force a specific provider or switch model families on-the-fly below.
+                    </p>
+                </div>
             """)
+            
+            routing_choices = [
+                "Llama 3.3 70B (Fastest Provider)",
+                "Llama 3.3 70B (SambaNova - Ultra Fast)",
+                "Llama 3.3 70B (Groq - High Speed)",
+                "Llama 3.3 70B (Together AI)",
+                "Llama 3.3 70B (Novita AI)",
+                "Qwen 2.5 72B (Fastest Provider)",
+                "Qwen 2.5 72B (SambaNova - Ultra Fast)",
+                "Qwen 2.5 72B (Together AI)",
+                "Mistral Large 2 (Fastest Provider)"
+            ]
+            
+            ROUTING_MODELS = {
+                "Llama 3.3 70B (Fastest Provider)": "meta-llama/Llama-3.3-70B-Instruct:fastest",
+                "Llama 3.3 70B (SambaNova - Ultra Fast)": "meta-llama/Llama-3.3-70B-Instruct:sambanova",
+                "Llama 3.3 70B (Groq - High Speed)": "meta-llama/Llama-3.3-70B-Instruct:groq",
+                "Llama 3.3 70B (Together AI)": "meta-llama/Llama-3.3-70B-Instruct:together",
+                "Llama 3.3 70B (Novita AI)": "meta-llama/Llama-3.3-70B-Instruct:novita",
+                "Qwen 2.5 72B (Fastest Provider)": "Qwen/Qwen2.5-72B-Instruct:fastest",
+                "Qwen 2.5 72B (SambaNova - Ultra Fast)": "Qwen/Qwen2.5-72B-Instruct:sambanova",
+                "Qwen 2.5 72B (Together AI)": "Qwen/Qwen2.5-72B-Instruct:together",
+                "Mistral Large 2 (Fastest Provider)": "mistralai/Mistral-Large-Instruct-2411:fastest"
+            }
+            
+            model_dropdown = gr.Dropdown(
+                choices=routing_choices,
+                value="Llama 3.3 70B (Fastest Provider)",
+                label="Active Model & Inference Provider Routing",
+                interactive=True
+            )
+            model_dropdown.change(
+                fn=lambda label: ROUTING_MODELS.get(label, "meta-llama/Llama-3.3-70B-Instruct:fastest"),
+                inputs=[model_dropdown],
+                outputs=[routing_state]
+            )
+            
             # Rendered here ONCE — synced into api_key_state on every keystroke
             user_api_key_input = gr.Textbox(
                 type="password",
