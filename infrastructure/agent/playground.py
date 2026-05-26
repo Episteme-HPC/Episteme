@@ -293,7 +293,7 @@ def chat_fn(message, history, user_api_key):
                 )
             
             llm = ChatOpenAI(
-                model="meta-llama/Llama-3.3-70B-Instruct:together",
+                model="meta-llama/Llama-3.3-70B-Instruct:fastest",
                 base_url="https://router.huggingface.co/v1",
                 openai_api_key=hf_token,
                 temperature=0
