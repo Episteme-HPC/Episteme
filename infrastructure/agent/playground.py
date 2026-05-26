@@ -130,8 +130,15 @@ def clean_text(text: str) -> str:
 
 
 # Configuration
-MCP_SERVER_URL = os.getenv("MCP_SERVER_URL", "http://localhost:8080/mcp/message")
-METRICS_URL = os.getenv("METRICS_URL", "http://localhost:8080/mcp/message") # Use JSON-RPC for metrics too
+raw_mcp_url = os.getenv("MCP_SERVER_URL", "http://127.0.0.1:8080/mcp/message")
+if "localhost" in raw_mcp_url:
+    raw_mcp_url = raw_mcp_url.replace("localhost", "127.0.0.1")
+MCP_SERVER_URL = raw_mcp_url
+
+raw_metrics_url = os.getenv("METRICS_URL", "http://127.0.0.1:8080/mcp/message")
+if "localhost" in raw_metrics_url:
+    raw_metrics_url = raw_metrics_url.replace("localhost", "127.0.0.1")
+METRICS_URL = raw_metrics_url
 
 class EpistemeClient:
     def __init__(self, url):
