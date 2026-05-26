@@ -50,10 +50,73 @@ from langchain.agents import create_tool_calling_agent, create_react_agent
 from langchain.agents import AgentExecutor
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder, PromptTemplate
 from langchain_core.tools import tool
-from typing import Union
+from typing import Union, List, Optional, Any
 from dotenv import load_dotenv
 
+from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.outputs import ChatResult, ChatGeneration
+from langchain_core.messages import BaseMessage, AIMessage, HumanMessage, SystemMessage
+
 load_dotenv()
+
+# --- Custom LLM Wrapper for Free Direct Hugging Face Serverless API ---
+class HuggingFaceDirectChat(BaseChatModel):
+    model_id: str
+    hf_token: str
+
+    def _generate(self, messages: List[BaseMessage], stop: Optional[List[str]] = None, **kwargs: Any) -> ChatResult:
+        # Construct ChatML prompt for Qwen/Llama models
+        prompt = ""
+        for m in messages:
+            if m.type == "system" or isinstance(m, SystemMessage):
+                prompt += f"<|im_start|>system\n{m.content}<|im_end|>\n"
+            elif m.type == "user" or isinstance(m, HumanMessage):
+                prompt += f"<|im_start|>user\n{m.content}<|im_end|>\n"
+            elif m.type == "assistant" or isinstance(m, AIMessage):
+                prompt += f"<|im_start|>assistant\n{m.content}<|im_end|>\n"
+        prompt += "<|im_start|>assistant\n"
+        
+        headers = {
+            "Authorization": f"Bearer {self.hf_token}",
+            "Content-Type": "application/json"
+        }
+        parameters = {
+            "max_new_tokens": 1024,
+            "temperature": 0.01,
+            "return_full_text": False
+        }
+        if stop:
+            parameters["stop"] = stop
+            
+        payload = {
+            "inputs": prompt,
+            "parameters": parameters
+        }
+        
+        url = f"https://api-inference.huggingface.co/models/{self.model_id}"
+        
+        response = httpx.post(url, json=payload, headers=headers, timeout=60.0)
+        response.raise_for_status()
+        res_json = response.json()
+        
+        generated_text = ""
+        if isinstance(res_json, list) and len(res_json) > 0:
+            generated_text = res_json[0].get("generated_text", "")
+        elif isinstance(res_json, dict):
+            generated_text = res_json.get("generated_text", "")
+            
+        # Clean Qwen/Llama ChatML tokens
+        if "<|im_end|>" in generated_text:
+            generated_text = generated_text.split("<|im_end|>")[0]
+        if "<|end_of_text|>" in generated_text:
+            generated_text = generated_text.split("<|end_of_text|>")[0]
+            
+        ai_message = AIMessage(content=generated_text)
+        return ChatResult(generations=[ChatGeneration(message=ai_message)])
+
+    @property
+    def _llm_type(self) -> str:
+        return "huggingface_direct_chat"
 
 # --- Helper to clean up parser remnants (e.g., \nObserv) ---
 def clean_text(text: str) -> str:
@@ -328,12 +391,18 @@ def chat_fn(message, history, user_api_key, routing_config):
                     elif "mistral" in parts[0].lower():
                         model_display_name = "Mistral Large 2"
             
-            llm = ChatOpenAI(
-                model=routing_model,
-                base_url=base_url,
-                openai_api_key=hf_token,
-                temperature=0
-            )
+            if "api-inference.huggingface.co" in base_url:
+                llm = HuggingFaceDirectChat(
+                    model_id=routing_model,
+                    hf_token=hf_token
+                )
+            else:
+                llm = ChatOpenAI(
+                    model=routing_model,
+                    base_url=base_url,
+                    openai_api_key=hf_token,
+                    temperature=0
+                )
             provider_info = f"🍃 *Running on Free Hugging Face Serverless API ({model_display_name} - Provider: {provider_suffix})*"
             agent = create_react_agent(llm, tools, react_prompt)
             agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=False)
