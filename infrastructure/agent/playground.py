@@ -236,7 +236,7 @@ Action: the action to take, should be one of [{tool_names}]
 Action Input: the input to the action. Formatting rules:
   - For single-argument tools (e.g. get_constant, simplify_expression, get_task_status), provide just the raw value: e.g. SPEED_OF_LIGHT or (x^2 - 1)/(x - 1)
   - For simple multi-argument tools (e.g. convert_units, solve_expression, read_hdf5_data), provide the arguments separated by commas: e.g. 2.0, meters, inches or cos(x) - x, 0.0, 1.0
-  - For complex tools (e.g. execute_simulation, calculate_matrix), provide a single valid JSON object containing all the argument keys: e.g. {"simulationType": "NBODY", "parameters": {{"bodies": 5, "g": 6.674e-11}}}
+  - For complex tools (e.g. execute_simulation, calculate_matrix), provide a single valid JSON object containing all the argument keys: e.g. {{"simulationType": "NBODY", "parameters": {{"bodies": 5, "g": 6.674e-11}}}}
 Observation: the result of the action
 ... (this Thought/Action/Action Input/Observation can repeat N times)
 Thought: I now know the final answer
