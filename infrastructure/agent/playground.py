@@ -50,9 +50,21 @@ from langchain.agents import create_tool_calling_agent, create_react_agent
 from langchain.agents import AgentExecutor
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder, PromptTemplate
 from langchain_core.tools import tool
+from typing import Union
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# --- Helper to clean up parser remnants (e.g., \nObserv) ---
+def clean_text(text: str) -> str:
+    if not isinstance(text, str):
+        return text
+    # Clean up parser garbage trailing suffixes
+    for suffix in ["\nObserv", "\nObservation", "\nObservation:", "\nObser", "\nObs", "\nO"]:
+        if text.endswith(suffix):
+            text = text[:-len(suffix)]
+    return text.strip()
+
 
 # Configuration
 MCP_SERVER_URL = os.getenv("MCP_SERVER_URL", "http://localhost:8080/mcp/message")
@@ -80,43 +92,117 @@ client = EpistemeClient(MCP_SERVER_URL)
 
 # --- Tools ---
 @tool
-def convert_units(value: float, from_unit: str, to_unit: str):
-    """Convert scientific units (e.g., from 'meters' to 'kilometers')."""
+def convert_units(value: Union[float, str], from_unit: str = None, to_unit: str = None):
+    """Convert scientific units. Can accept individual arguments, or a single comma-separated string like '2.0, meters, inches'."""
+    # Handle single string passed to the first argument
+    if isinstance(value, str) and (from_unit is None or to_unit is None):
+        parts = [p.strip() for p in clean_text(value).split(",")]
+        if len(parts) >= 3:
+            value, from_unit, to_unit = parts[0], parts[1], parts[2]
+            
+    value = clean_text(value) if isinstance(value, str) else value
+    from_unit = clean_text(from_unit) if from_unit else ""
+    to_unit = clean_text(to_unit) if to_unit else ""
+    
+    try:
+        value = float(value)
+    except:
+        return f"Error: value '{value}' must be a valid number."
+        
     return client.call("tools/call", {"name": "convert_units", "arguments": {"value": value, "from": from_unit, "to": to_unit}})
 
 @tool
 def get_constant(name: str):
     """Retrieve scientific constants (e.g., PI, G, SPEED_OF_LIGHT, EARTH_RADIUS)."""
+    name = clean_text(name)
     return client.call("tools/call", {"name": "get_constant", "arguments": {"name": name}})
 
 @tool
-def solve_expression(expression: str, guessMin: float, guessMax: float):
-    """Find a root for f(x) = 0 using numerical methods (Brent). Useful for trajectories and impact points."""
+def solve_expression(expression: str, guessMin: Union[float, str] = None, guessMax: Union[float, str] = None):
+    """Find a root for f(x) = 0 using numerical methods (Brent). Can accept individual arguments or a single comma-separated string like 'cos(x) - x, 0.0, 1.0'."""
+    if guessMin is None or guessMax is None:
+        parts = [p.strip() for p in clean_text(expression).split(",")]
+        if len(parts) >= 3:
+            expression, guessMin, guessMax = parts[0], parts[1], parts[2]
+            
+    expression = clean_text(expression)
+    guessMin = clean_text(guessMin) if isinstance(guessMin, str) else guessMin
+    guessMax = clean_text(guessMax) if isinstance(guessMax, str) else guessMax
+    
+    try:
+        guessMin = float(guessMin)
+        guessMax = float(guessMax)
+    except:
+        return f"Error: guessMin '{guessMin}' and guessMax '{guessMax}' must be valid numbers."
+        
     return client.call("tools/call", {"name": "solve_expression", "arguments": {"expression": expression, "guessMin": guessMin, "guessMax": guessMax}})
 
 @tool
-def execute_simulation(simulationType: str, parameters: dict):
-    """Start a scientific simulation task (FLUID, NBODY, SIR, MIGRATION). Returns a taskId."""
+def execute_simulation(simulationType: str, parameters: Union[dict, str] = None):
+    """Start a scientific simulation task (FLUID, NBODY, SIR, MIGRATION)."""
+    if parameters is None:
+        if isinstance(simulationType, str):
+            try:
+                data = json.loads(clean_text(simulationType))
+                if isinstance(data, dict):
+                    simulationType = data.get("simulationType")
+                    parameters = data.get("parameters")
+            except:
+                pass
+                
+    simulationType = clean_text(simulationType)
+    if isinstance(parameters, str):
+        try: parameters = json.loads(clean_text(parameters))
+        except: pass
+        
     return client.call("tools/call", {"name": "execute_simulation", "arguments": {"simulationType": simulationType, "parameters": parameters}})
 
 @tool
 def get_task_status(taskId: str):
     """Check the status and result of a long-running task."""
+    taskId = clean_text(taskId)
     return client.call("tools/call", {"name": "get_task_status", "arguments": {"taskId": taskId}})
 
 @tool
-def calculate_matrix(matrixA: list, matrixB: list, op: str):
-    """Perform high-performance matrix operations (ADD, SUBTRACT, MULTIPLY) on 2D arrays using bare-metal Java FFM."""
+def calculate_matrix(matrixA: Union[list, str], matrixB: Union[list, str] = None, op: str = None):
+    """Perform high-performance matrix operations (ADD, SUBTRACT, MULTIPLY) on 2D arrays."""
+    if matrixB is None or op is None:
+        if isinstance(matrixA, str):
+            try:
+                data = json.loads(clean_text(matrixA))
+                if isinstance(data, dict):
+                    matrixA = data.get("matrixA")
+                    matrixB = data.get("matrixB")
+                    op = data.get("op")
+            except:
+                pass
+                
+    if isinstance(matrixA, str):
+        try: matrixA = json.loads(clean_text(matrixA))
+        except: pass
+    if isinstance(matrixB, str):
+        try: matrixB = json.loads(clean_text(matrixB))
+        except: pass
+    op = clean_text(op) if op else ""
+    
     return client.call("tools/call", {"name": "calculate_matrix", "arguments": {"matrixA": matrixA, "matrixB": matrixB, "op": op}})
 
 @tool
 def simplify_expression(expression: str):
     """Simplify a mathematical expression symbolically (e.g., 'x + x' -> '2x')."""
+    expression = clean_text(expression)
     return client.call("tools/call", {"name": "simplify_expression", "arguments": {"expression": expression}})
 
 @tool
-def read_hdf5_data(filePath: str, datasetPath: str):
-    """Read a dataset from an HDF5 scientific file."""
+def read_hdf5_data(filePath: str, datasetPath: str = None):
+    """Read a dataset from an HDF5 scientific file. Can accept 'filePath, datasetPath'."""
+    if datasetPath is None:
+        parts = [p.strip() for p in clean_text(filePath).split(",")]
+        if len(parts) >= 2:
+            filePath, datasetPath = parts[0], parts[1]
+            
+    filePath = clean_text(filePath)
+    datasetPath = clean_text(datasetPath) if datasetPath else ""
     return client.call("tools/call", {"name": "read_hdf5_data", "arguments": {"filePath": filePath, "datasetPath": datasetPath}})
 
 tools = [
@@ -147,7 +233,10 @@ Use the following format:
 Question: the input question you must answer
 Thought: you should always think about what to do
 Action: the action to take, should be one of [{tool_names}]
-Action Input: the input to the action
+Action Input: the input to the action. Formatting rules:
+  - For single-argument tools (e.g. get_constant, simplify_expression, get_task_status), provide just the raw value: e.g. SPEED_OF_LIGHT or (x^2 - 1)/(x - 1)
+  - For simple multi-argument tools (e.g. convert_units, solve_expression, read_hdf5_data), provide the arguments separated by commas: e.g. 2.0, meters, inches or cos(x) - x, 0.0, 1.0
+  - For complex tools (e.g. execute_simulation, calculate_matrix), provide a single valid JSON object containing all the argument keys: e.g. {"simulationType": "NBODY", "parameters": {{"bodies": 5, "g": 6.674e-11}}}
 Observation: the result of the action
 ... (this Thought/Action/Action Input/Observation can repeat N times)
 Thought: I now know the final answer
