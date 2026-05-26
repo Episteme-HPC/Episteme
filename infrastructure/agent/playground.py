@@ -267,10 +267,23 @@ def get_metrics():
            f"{memory} MB", \
            f"{ops:.2f} ms" if isinstance(ops, float) else f"{ops} ms"
 
-def chat_fn(message, history, user_api_key, routing_model):
+def chat_fn(message, history, user_api_key, routing_config):
     user_api_key = user_api_key.strip() if user_api_key else ""
-    if not routing_model:
-        routing_model = "meta-llama/Llama-3.3-70B-Instruct:fastest"
+    
+    # Set default values if not defined or malformed
+    routing_model = "Qwen/Qwen2.5-72B-Instruct"
+    base_url = "https://api-inference.huggingface.co/v1"
+    if routing_config:
+        if "," in routing_config:
+            parts = routing_config.split(",")
+            if len(parts) >= 2:
+                routing_model = parts[0]
+                base_url = parts[1]
+        else:
+            # Fallback if somehow only model ID was stored
+            routing_model = routing_config
+            if ":" in routing_model:
+                base_url = "https://router.huggingface.co/v1"
     
     try:
         if user_api_key.startswith("sk-"):
@@ -297,17 +310,27 @@ def chat_fn(message, history, user_api_key, routing_model):
             # Map model name and provider suffix for clean UI display
             provider_suffix = "Fastest"
             model_display_name = "Llama 3.3 70B"
-            if ":" in routing_model:
-                parts = routing_model.split(":")
-                provider_suffix = parts[1].capitalize()
-                if "qwen" in parts[0].lower():
+            
+            if "api-inference.huggingface.co" in base_url:
+                provider_suffix = "Hugging Face Direct (Unlimited)"
+                if "qwen" in routing_model.lower():
                     model_display_name = "Qwen 2.5 72B"
-                elif "mistral" in parts[0].lower():
-                    model_display_name = "Mistral Large 2"
+                elif "llama-3.1" in routing_model.lower():
+                    model_display_name = "Llama 3.1 8B"
+                elif "llama-3.3" in routing_model.lower():
+                    model_display_name = "Llama 3.3 70B"
+            else:
+                if ":" in routing_model:
+                    parts = routing_model.split(":")
+                    provider_suffix = parts[1].capitalize()
+                    if "qwen" in parts[0].lower():
+                        model_display_name = "Qwen 2.5 72B"
+                    elif "mistral" in parts[0].lower():
+                        model_display_name = "Mistral Large 2"
             
             llm = ChatOpenAI(
                 model=routing_model,
-                base_url="https://router.huggingface.co/v1",
+                base_url=base_url,
                 openai_api_key=hf_token,
                 temperature=0
             )
@@ -419,7 +442,7 @@ with gr.Blocks(title="Episteme Scientific Playground") as demo:
     # Using gr.State avoids rendering the Textbox twice (ChatInterface
     # would auto-render additional_inputs, causing DuplicateBlockError).
     api_key_state = gr.State(value="")
-    routing_state = gr.State(value="meta-llama/Llama-3.3-70B-Instruct:fastest")
+    routing_state = gr.State(value="Qwen/Qwen2.5-72B-Instruct,https://api-inference.huggingface.co/v1")
     # Compact Title Section for iframe compatibility
     gr.HTML("""
         <div style="text-align: center; padding: 10px 0; margin-bottom: 5px;">
@@ -555,14 +578,21 @@ with gr.Blocks(title="Episteme Scientific Playground") as demo:
                 </div>
                 
                 <div class="premium-card">
-                    <h3>🌐 Hugging Face Serverless AI Router</h3>
+                    <h3>🌐 Hugging Face Serverless AI Router &amp; Endpoints</h3>
                     <p style="font-size: 0.9rem; line-height: 1.5; margin: 0 0 10px 0;">
-                        The free model uses Hugging Face's serverless router. By default, it routes dynamically to the fastest active provider (like SambaNova or Groq). You can force a specific provider or switch model families on-the-fly below.
+                        Choose your backend serverless endpoint below.
                     </p>
+                    <ul style="font-size: 0.85rem; padding-left: 18px; margin: 0 0 10px 0; line-height: 1.4;">
+                        <li><strong>HF Direct Serverless (100% Free &amp; Unlimited)</strong>: Immune to the 402 provider credit error. Runs directly on Hugging Face's own hardware.</li>
+                        <li><strong>Inference Providers Gateway (Subject to HF Credit Limits)</strong>: Routes dynamically to commercial providers (SambaNova, Groq, Together). Highly optimized but subject to Hugging Face monthly credit caps.</li>
+                    </ul>
                 </div>
             """)
             
             routing_choices = [
+                "Qwen 2.5 72B (HF Direct - Unlimited Free)",
+                "Llama 3.1 8B (HF Direct - Unlimited Free)",
+                "Llama 3.3 70B (HF Direct - Gated Free)",
                 "Llama 3.3 70B (Fastest Provider)",
                 "Llama 3.3 70B (SambaNova - Ultra Fast)",
                 "Llama 3.3 70B (Groq - High Speed)",
@@ -575,25 +605,64 @@ with gr.Blocks(title="Episteme Scientific Playground") as demo:
             ]
             
             ROUTING_MODELS = {
-                "Llama 3.3 70B (Fastest Provider)": "meta-llama/Llama-3.3-70B-Instruct:fastest",
-                "Llama 3.3 70B (SambaNova - Ultra Fast)": "meta-llama/Llama-3.3-70B-Instruct:sambanova",
-                "Llama 3.3 70B (Groq - High Speed)": "meta-llama/Llama-3.3-70B-Instruct:groq",
-                "Llama 3.3 70B (Together AI)": "meta-llama/Llama-3.3-70B-Instruct:together",
-                "Llama 3.3 70B (Novita AI)": "meta-llama/Llama-3.3-70B-Instruct:novita",
-                "Qwen 2.5 72B (Fastest Provider)": "Qwen/Qwen2.5-72B-Instruct:fastest",
-                "Qwen 2.5 72B (SambaNova - Ultra Fast)": "Qwen/Qwen2.5-72B-Instruct:sambanova",
-                "Qwen 2.5 72B (Together AI)": "Qwen/Qwen2.5-72B-Instruct:together",
-                "Mistral Large 2 (Fastest Provider)": "mistralai/Mistral-Large-Instruct-2411:fastest"
+                "Qwen 2.5 72B (HF Direct - Unlimited Free)": {
+                    "model": "Qwen/Qwen2.5-72B-Instruct",
+                    "base_url": "https://api-inference.huggingface.co/v1"
+                },
+                "Llama 3.1 8B (HF Direct - Unlimited Free)": {
+                    "model": "meta-llama/Meta-Llama-3.1-8B-Instruct",
+                    "base_url": "https://api-inference.huggingface.co/v1"
+                },
+                "Llama 3.3 70B (HF Direct - Gated Free)": {
+                    "model": "meta-llama/Llama-3.3-70B-Instruct",
+                    "base_url": "https://api-inference.huggingface.co/v1"
+                },
+                "Llama 3.3 70B (Fastest Provider)": {
+                    "model": "meta-llama/Llama-3.3-70B-Instruct:fastest",
+                    "base_url": "https://router.huggingface.co/v1"
+                },
+                "Llama 3.3 70B (SambaNova - Ultra Fast)": {
+                    "model": "meta-llama/Llama-3.3-70B-Instruct:sambanova",
+                    "base_url": "https://router.huggingface.co/v1"
+                },
+                "Llama 3.3 70B (Groq - High Speed)": {
+                    "model": "meta-llama/Llama-3.3-70B-Instruct:groq",
+                    "base_url": "https://router.huggingface.co/v1"
+                },
+                "Llama 3.3 70B (Together AI)": {
+                    "model": "meta-llama/Llama-3.3-70B-Instruct:together",
+                    "base_url": "https://router.huggingface.co/v1"
+                },
+                "Llama 3.3 70B (Novita AI)": {
+                    "model": "meta-llama/Llama-3.3-70B-Instruct:novita",
+                    "base_url": "https://router.huggingface.co/v1"
+                },
+                "Qwen 2.5 72B (Fastest Provider)": {
+                    "model": "Qwen/Qwen2.5-72B-Instruct:fastest",
+                    "base_url": "https://router.huggingface.co/v1"
+                },
+                "Qwen 2.5 72B (SambaNova - Ultra Fast)": {
+                    "model": "Qwen/Qwen2.5-72B-Instruct:sambanova",
+                    "base_url": "https://router.huggingface.co/v1"
+                },
+                "Qwen 2.5 72B (Together AI)": {
+                    "model": "Qwen/Qwen2.5-72B-Instruct:together",
+                    "base_url": "https://router.huggingface.co/v1"
+                },
+                "Mistral Large 2 (Fastest Provider)": {
+                    "model": "mistralai/Mistral-Large-Instruct-2411:fastest",
+                    "base_url": "https://router.huggingface.co/v1"
+                }
             }
             
             model_dropdown = gr.Dropdown(
                 choices=routing_choices,
-                value="Llama 3.3 70B (Fastest Provider)",
+                value="Qwen 2.5 72B (HF Direct - Unlimited Free)",
                 label="Active Model & Inference Provider Routing",
                 interactive=True
             )
             model_dropdown.change(
-                fn=lambda label: ROUTING_MODELS.get(label, "meta-llama/Llama-3.3-70B-Instruct:fastest"),
+                fn=lambda label: f"{ROUTING_MODELS[label]['model']},{ROUTING_MODELS[label]['base_url']}",
                 inputs=[model_dropdown],
                 outputs=[routing_state]
             )
