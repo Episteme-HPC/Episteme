@@ -50,73 +50,10 @@ from langchain.agents import create_tool_calling_agent, create_react_agent
 from langchain.agents import AgentExecutor
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder, PromptTemplate
 from langchain_core.tools import tool
-from typing import Union, List, Optional, Any
+from typing import Union
 from dotenv import load_dotenv
 
-from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_core.outputs import ChatResult, ChatGeneration
-from langchain_core.messages import BaseMessage, AIMessage, HumanMessage, SystemMessage
-
 load_dotenv()
-
-# --- Custom LLM Wrapper for Free Direct Hugging Face Serverless API ---
-class HuggingFaceDirectChat(BaseChatModel):
-    model_id: str
-    hf_token: str
-
-    def _generate(self, messages: List[BaseMessage], stop: Optional[List[str]] = None, **kwargs: Any) -> ChatResult:
-        # Construct ChatML prompt for Qwen/Llama models
-        prompt = ""
-        for m in messages:
-            if m.type == "system" or isinstance(m, SystemMessage):
-                prompt += f"<|im_start|>system\n{m.content}<|im_end|>\n"
-            elif m.type == "user" or isinstance(m, HumanMessage):
-                prompt += f"<|im_start|>user\n{m.content}<|im_end|>\n"
-            elif m.type == "assistant" or isinstance(m, AIMessage):
-                prompt += f"<|im_start|>assistant\n{m.content}<|im_end|>\n"
-        prompt += "<|im_start|>assistant\n"
-        
-        headers = {
-            "Authorization": f"Bearer {self.hf_token}",
-            "Content-Type": "application/json"
-        }
-        parameters = {
-            "max_new_tokens": 1024,
-            "temperature": 0.01,
-            "return_full_text": False
-        }
-        if stop:
-            parameters["stop"] = stop
-            
-        payload = {
-            "inputs": prompt,
-            "parameters": parameters
-        }
-        
-        url = f"https://api-inference.huggingface.co/models/{self.model_id}"
-        
-        response = httpx.post(url, json=payload, headers=headers, timeout=60.0)
-        response.raise_for_status()
-        res_json = response.json()
-        
-        generated_text = ""
-        if isinstance(res_json, list) and len(res_json) > 0:
-            generated_text = res_json[0].get("generated_text", "")
-        elif isinstance(res_json, dict):
-            generated_text = res_json.get("generated_text", "")
-            
-        # Clean Qwen/Llama ChatML tokens
-        if "<|im_end|>" in generated_text:
-            generated_text = generated_text.split("<|im_end|>")[0]
-        if "<|end_of_text|>" in generated_text:
-            generated_text = generated_text.split("<|end_of_text|>")[0]
-            
-        ai_message = AIMessage(content=generated_text)
-        return ChatResult(generations=[ChatGeneration(message=ai_message)])
-
-    @property
-    def _llm_type(self) -> str:
-        return "huggingface_direct_chat"
 
 # --- Helper to clean up parser remnants (e.g., \nObserv) ---
 def clean_text(text: str) -> str:
@@ -342,18 +279,20 @@ def chat_fn(message, history, user_api_key, routing_config):
     
     # Set default values if not defined or malformed
     routing_model = "Qwen/Qwen2.5-72B-Instruct"
-    base_url = "https://api-inference.huggingface.co/v1"
+    base_url = "https://router.huggingface.co/v1"
     if routing_config:
         if "," in routing_config:
             parts = routing_config.split(",")
             if len(parts) >= 2:
                 routing_model = parts[0]
                 base_url = parts[1]
+                # Self-healing legacy API rewrite
+                if "api-inference.huggingface.co" in base_url:
+                    base_url = "https://router.huggingface.co/v1"
         else:
             # Fallback if somehow only model ID was stored
             routing_model = routing_config
-            if ":" in routing_model:
-                base_url = "https://router.huggingface.co/v1"
+            base_url = "https://router.huggingface.co/v1"
     
     try:
         if user_api_key.startswith("sk-"):
@@ -381,7 +320,7 @@ def chat_fn(message, history, user_api_key, routing_config):
             provider_suffix = "Fastest"
             model_display_name = "Llama 3.3 70B"
             
-            if "api-inference.huggingface.co" in base_url:
+            if ":" not in routing_model:
                 provider_suffix = "Hugging Face Direct (Unlimited)"
                 if "qwen" in routing_model.lower():
                     model_display_name = "Qwen 2.5 72B"
@@ -390,26 +329,21 @@ def chat_fn(message, history, user_api_key, routing_config):
                 elif "llama-3.3" in routing_model.lower():
                     model_display_name = "Llama 3.3 70B"
             else:
-                if ":" in routing_model:
-                    parts = routing_model.split(":")
-                    provider_suffix = parts[1].capitalize()
-                    if "qwen" in parts[0].lower():
-                        model_display_name = "Qwen 2.5 72B"
-                    elif "mistral" in parts[0].lower():
-                        model_display_name = "Mistral Large 2"
+                parts = routing_model.split(":")
+                provider_suffix = parts[1].capitalize()
+                if "qwen" in parts[0].lower():
+                    model_display_name = "Qwen 2.5 72B"
+                elif "mistral" in parts[0].lower():
+                    model_display_name = "Mistral Large 2"
+                elif "llama" in parts[0].lower():
+                    model_display_name = "Llama 3.3 70B"
             
-            if "api-inference.huggingface.co" in base_url:
-                llm = HuggingFaceDirectChat(
-                    model_id=routing_model,
-                    hf_token=hf_token
-                )
-            else:
-                llm = ChatOpenAI(
-                    model=routing_model,
-                    base_url=base_url,
-                    openai_api_key=hf_token,
-                    temperature=0
-                )
+            llm = ChatOpenAI(
+                model=routing_model,
+                base_url=base_url,
+                openai_api_key=hf_token,
+                temperature=0
+            )
             provider_info = f"🍃 *Running on Free Hugging Face Serverless API ({model_display_name} - Provider: {provider_suffix})*"
             agent = create_react_agent(llm, tools, react_prompt)
             agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=False)
@@ -518,7 +452,7 @@ with gr.Blocks(title="Episteme Scientific Playground") as demo:
     # Using gr.State avoids rendering the Textbox twice (ChatInterface
     # would auto-render additional_inputs, causing DuplicateBlockError).
     api_key_state = gr.State(value="")
-    routing_state = gr.State(value="Qwen/Qwen2.5-72B-Instruct,https://api-inference.huggingface.co/v1")
+    routing_state = gr.State(value="Qwen/Qwen2.5-72B-Instruct,https://router.huggingface.co/v1")
     # Compact Title Section for iframe compatibility
     gr.HTML("""
         <div style="text-align: center; padding: 10px 0; margin-bottom: 5px;">
@@ -683,15 +617,15 @@ with gr.Blocks(title="Episteme Scientific Playground") as demo:
             ROUTING_MODELS = {
                 "Qwen 2.5 72B (HF Direct - Unlimited Free)": {
                     "model": "Qwen/Qwen2.5-72B-Instruct",
-                    "base_url": "https://api-inference.huggingface.co/v1"
+                    "base_url": "https://router.huggingface.co/v1"
                 },
                 "Llama 3.1 8B (HF Direct - Unlimited Free)": {
                     "model": "meta-llama/Meta-Llama-3.1-8B-Instruct",
-                    "base_url": "https://api-inference.huggingface.co/v1"
+                    "base_url": "https://router.huggingface.co/v1"
                 },
                 "Llama 3.3 70B (HF Direct - Gated Free)": {
                     "model": "meta-llama/Llama-3.3-70B-Instruct",
-                    "base_url": "https://api-inference.huggingface.co/v1"
+                    "base_url": "https://router.huggingface.co/v1"
                 },
                 "Llama 3.3 70B (Fastest Provider)": {
                     "model": "meta-llama/Llama-3.3-70B-Instruct:fastest",
