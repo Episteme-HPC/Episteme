@@ -20,10 +20,11 @@ Here is what makes Episteme different:
 
 I’m incredibly proud of what this project demonstrates about the future of AI-assisted software engineering and high-performance computing on the JVM.
 
-**Explore the project and benchmarks here:** [https://github.com/Episteme-HCP/Episteme](https://github.com/Episteme-HCP/Episteme)
+**Explore the project and benchmarks here:** [https://github.com/episteme-hpc/Episteme](https://github.com/episteme-hpc/Episteme)
 *(Feel free to star it if you find it interesting! ⭐)*
 
 💼 **Looking for my next challenge!**
 I am currently looking for a full-time Software Engineering role where I can push the boundaries of HPC, complex backend systems, and AI-accelerated development. If your team is tackling tough problems and pushing the limits of what's possible, let’s connect or drop me a DM!
 
 #Java #HighPerformanceComputing #HPC #AI #SoftwareEngineering #OpenSource #Episteme #ScientificComputing #JavaPanama #OpenToWork
+

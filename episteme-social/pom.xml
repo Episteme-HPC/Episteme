@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>io.github.episteme-hcp</groupId>
+        <groupId>io.github.episteme-hpc</groupId>
         <artifactId>episteme-parent</artifactId>
         <version>${revision}</version>
     </parent>
@@ -17,12 +17,12 @@
 
     <dependencies>
         <dependency>
-            <groupId>io.github.episteme-hcp</groupId>
+            <groupId>io.github.episteme-hpc</groupId>
             <artifactId>episteme-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.github.episteme-hcp</groupId>
+            <groupId>io.github.episteme-hpc</groupId>
             <artifactId>episteme-natural</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -93,3 +93,4 @@
         </plugins>
     </build>
 </project>
+

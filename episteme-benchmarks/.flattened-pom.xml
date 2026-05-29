@@ -3,7 +3,7 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>io.github.episteme-hcp</groupId>
+    <groupId>io.github.episteme-hpc</groupId>
     <artifactId>episteme-parent</artifactId>
     <version>1.0.0-beta3.0.17</version>
   </parent>
@@ -24,7 +24,7 @@
   </properties>
   <dependencies>
     <dependency>
-      <groupId>io.github.episteme-hcp</groupId>
+      <groupId>io.github.episteme-hpc</groupId>
       <artifactId>episteme-core</artifactId>
       <version>${project.version}</version>
       <exclusions>
@@ -39,7 +39,7 @@
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>io.github.episteme-hcp</groupId>
+      <groupId>io.github.episteme-hpc</groupId>
       <artifactId>episteme-natural</artifactId>
       <version>${project.version}</version>
       <exclusions>
@@ -54,7 +54,7 @@
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>io.github.episteme-hcp</groupId>
+      <groupId>io.github.episteme-hpc</groupId>
       <artifactId>episteme-social</artifactId>
       <version>${project.version}</version>
       <exclusions>
@@ -69,7 +69,7 @@
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>io.github.episteme-hcp</groupId>
+      <groupId>io.github.episteme-hpc</groupId>
       <artifactId>episteme-native</artifactId>
       <version>${project.version}</version>
       <exclusions>
@@ -84,7 +84,7 @@
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>io.github.episteme-hcp</groupId>
+      <groupId>io.github.episteme-hpc</groupId>
       <artifactId>episteme-client</artifactId>
       <version>${project.version}</version>
       <exclusions>
@@ -99,7 +99,7 @@
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>io.github.episteme-hcp</groupId>
+      <groupId>io.github.episteme-hpc</groupId>
       <artifactId>episteme-server</artifactId>
       <version>${project.version}</version>
       <exclusions>
@@ -321,7 +321,7 @@
             </goals>
             <configuration>
               <outputDirectory>${project.build.directory}/lib</outputDirectory>
-              <excludeGroupIds>io.github.episteme-hcp</excludeGroupIds>
+              <excludeGroupIds>io.github.episteme-hpc</excludeGroupIds>
             </configuration>
           </execution>
         </executions>
@@ -372,3 +372,4 @@
     </profile>
   </profiles>
 </project>
+

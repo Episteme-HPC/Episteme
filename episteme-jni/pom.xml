@@ -4,23 +4,23 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>io.github.episteme-hcp</groupId>
+    <groupId>io.github.episteme-hpc</groupId>
     <artifactId>episteme-parent</artifactId>
     <version>${revision}</version>
   </parent>
-  <groupId>io.github.episteme-hcp</groupId>
+  <groupId>io.github.episteme-hpc</groupId>
   <artifactId>episteme-jni</artifactId>
   <name>Episteme JNI Backend</name>
   <description>Traditional JNI bindings for legacy native library integration.</description>
 
   <dependencies>
     <dependency>
-      <groupId>io.github.episteme-hcp</groupId>
+      <groupId>io.github.episteme-hpc</groupId>
       <artifactId>episteme-natural</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>io.github.episteme-hcp</groupId>
+      <groupId>io.github.episteme-hpc</groupId>
       <artifactId>episteme-core</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -66,3 +66,4 @@
     </plugins>
   </build>
 </project>
+

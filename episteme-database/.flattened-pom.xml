@@ -3,7 +3,7 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>io.github.episteme-hcp</groupId>
+    <groupId>io.github.episteme-hpc</groupId>
     <artifactId>episteme-parent</artifactId>
     <version>1.0.0-beta3.0.17</version>
   </parent>
@@ -20,7 +20,7 @@
   </licenses>
   <dependencies>
     <dependency>
-      <groupId>io.github.episteme-hcp</groupId>
+      <groupId>io.github.episteme-hpc</groupId>
       <artifactId>episteme-core</artifactId>
     </dependency>
     <dependency>
@@ -70,3 +70,4 @@
     </plugins>
   </build>
 </project>
+

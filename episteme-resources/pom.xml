@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>io.github.episteme-hcp</groupId>
+        <groupId>io.github.episteme-hpc</groupId>
         <artifactId>episteme-parent</artifactId>
         <version>${revision}</version>
     </parent>
@@ -52,3 +52,4 @@
         </plugins>
     </build>
 </project>
+

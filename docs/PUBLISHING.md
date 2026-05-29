@@ -72,8 +72,8 @@ To use Episteme in another project, add the following to its `pom.xml`:
 <repositories>
     <repository>
         <id>github</id>
-        <name>GitHub Episteme-HCP Apache Maven Packages</name>
-        <url>https://maven.pkg.github.com/Episteme-HCP/Episteme</url>
+        <name>GitHub episteme-hpc Apache Maven Packages</name>
+        <url>https://maven.pkg.github.com/episteme-hpc/Episteme</url>
     </repository>
 </repositories>
 ```
@@ -81,7 +81,7 @@ To use Episteme in another project, add the following to its `pom.xml`:
 ### 2. Add Dependency
 ```xml
 <dependency>
-    <groupId>io.github.episteme-hcp</groupId>
+    <groupId>io.github.episteme-hpc</groupId>
     <artifactId>episteme-core</artifactId>
     <version>1.0.0-beta2</version>
 </dependency>
@@ -89,3 +89,4 @@ To use Episteme in another project, add the following to its `pom.xml`:
 
 > [!IMPORTANT]
 > Since this is a private/internal registry, consumers also need to have their `settings.xml` configured with a PAT (even if just for `read:packages`).
+

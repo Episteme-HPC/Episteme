@@ -3,7 +3,7 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>io.github.episteme-hcp</groupId>
+    <groupId>io.github.episteme-hpc</groupId>
     <artifactId>episteme-parent</artifactId>
     <version>1.0.0-beta3.0.17</version>
   </parent>
@@ -83,22 +83,22 @@
       <artifactId>s3</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.github.episteme-hcp</groupId>
+      <groupId>io.github.episteme-hpc</groupId>
       <artifactId>episteme-core</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>io.github.episteme-hcp</groupId>
+      <groupId>io.github.episteme-hpc</groupId>
       <artifactId>episteme-natural</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>io.github.episteme-hcp</groupId>
+      <groupId>io.github.episteme-hpc</groupId>
       <artifactId>episteme-social</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>io.github.episteme-hcp</groupId>
+      <groupId>io.github.episteme-hpc</groupId>
       <artifactId>episteme-native</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -331,7 +331,7 @@
             <configuration>
               <outputDirectory>${project.build.directory}/lib</outputDirectory>
               <includeScope>runtime</includeScope>
-              <excludeGroupIds>io.github.episteme-hcp</excludeGroupIds>
+              <excludeGroupIds>io.github.episteme-hpc</excludeGroupIds>
             </configuration>
           </execution>
         </executions>
@@ -423,3 +423,4 @@
     </profile>
   </profiles>
 </project>
+

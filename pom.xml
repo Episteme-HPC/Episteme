@@ -2,14 +2,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>io.github.episteme-hcp</groupId>
+  <groupId>io.github.episteme-hpc</groupId>
   <artifactId>episteme-parent</artifactId>
   <version>${revision}</version>
   <packaging>pom</packaging>
 
   <name>Episteme Unifying Parent</name>
   <description>Episteme - Unified Scientific Computing Framework (Parent POM)</description>
-  <url>https://github.com/Episteme-HCP/Episteme</url>
+  <url>https://github.com/episteme-hpc/Episteme</url>
   <inceptionYear>2025</inceptionYear>
   <modules>
     <module>episteme-core</module>
@@ -32,20 +32,20 @@
     </license>
   </licenses>
   <scm>
-    <connection>scm:git:git://github.com/Episteme-HCP/Episteme.git</connection>
-    <developerConnection>scm:git:ssh://github.com:Episteme-HCP/Episteme.git</developerConnection>
-    <url>https://github.com/Episteme-HCP/Episteme/tree/main</url>
+    <connection>scm:git:git://github.com/episteme-hpc/Episteme.git</connection>
+    <developerConnection>scm:git:ssh://github.com:episteme-hpc/Episteme.git</developerConnection>
+    <url>https://github.com/episteme-hpc/Episteme/tree/main</url>
   </scm>
   <distributionManagement>
     <snapshotRepository>
       <id>github</id>
       <name>GitHub Packages</name>
-      <url>https://maven.pkg.github.com/Episteme-HCP/Episteme</url>
+      <url>https://maven.pkg.github.com/episteme-hpc/Episteme</url>
     </snapshotRepository>
     <repository>
       <id>github</id>
       <name>GitHub Packages</name>
-      <url>https://maven.pkg.github.com/Episteme-HCP/Episteme</url>
+      <url>https://maven.pkg.github.com/episteme-hpc/Episteme</url>
     </repository>
   </distributionManagement>
   <developers>
@@ -116,18 +116,18 @@
     <dependencies>
       <!-- Internal modules -->
       <dependency>
-        <groupId>io.github.episteme-hcp</groupId>
+        <groupId>io.github.episteme-hpc</groupId>
         <artifactId>episteme-core</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>io.github.episteme-hcp</groupId>
+        <groupId>io.github.episteme-hpc</groupId>
         <artifactId>episteme-natural</artifactId>
         <version>${project.version}</version>
       </dependency>
 
       <dependency>
-        <groupId>io.github.episteme-hcp</groupId>
+        <groupId>io.github.episteme-hpc</groupId>
         <artifactId>episteme-database</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -1200,3 +1200,4 @@
     </profile>
   </profiles>
 </project>
+

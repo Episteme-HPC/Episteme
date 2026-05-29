@@ -11,7 +11,7 @@ Add this to your `pom.xml` or `settings.xml`:
 <repositories>
     <repository>
         <id>github</id>
-        <url>https://maven.pkg.github.com/Episteme-HCP/Episteme</url>
+        <url>https://maven.pkg.github.com/episteme-hpc/Episteme</url>
         <snapshots>
             <enabled>true</enabled>
         </snapshots>
@@ -28,7 +28,7 @@ Add this to your `build.gradle`:
 ```gradle
 repositories {
     maven {
-        url = uri("https://maven.pkg.github.com/Episteme-HCP/Episteme")
+        url = uri("https://maven.pkg.github.com/episteme-hpc/Episteme")
         credentials {
             username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
             password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
@@ -66,3 +66,4 @@ implementation 'org.episteme:episteme-core:1.0.0-beta1:jdk25'
 ```bash
 java -jar episteme-worker-1.0.0-beta1-fat.jar
 ```
+

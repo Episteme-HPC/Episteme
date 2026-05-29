@@ -20,10 +20,11 @@ Voici ce qui différencie Episteme :
 
 Je suis extrêmement fier de ce que ce projet démontre sur l'avenir de l'ingénierie logicielle assistée par l'IA et du calcul haute performance sur la JVM.
 
-**Découvrez le projet et nos benchmarks ici :** [https://github.com/Episteme-HCP/Episteme](https://github.com/Episteme-HCP/Episteme)
+**Découvrez le projet et nos benchmarks ici :** [https://github.com/episteme-hpc/Episteme](https://github.com/episteme-hpc/Episteme)
 *(N'hésitez pas à laisser une étoile (star) au projet s'il vous intéresse ! ⭐)*
 
 💼 **À la recherche de mon prochain défi !**
 Je suis actuellement à la recherche d'un poste d'Ingénieur Logiciel (Software Engineer) à temps plein où je pourrai repousser les limites du HPC, des systèmes backend complexes et du développement accéléré par l'IA. Si votre équipe s'attaque à des problèmes d'envergure et repousse les limites du possible, connectons-nous ou envoyez-moi un message direct !
 
 #Java #HighPerformanceComputing #HPC #IA #SoftwareEngineering #OpenSource #Episteme #ScientificComputing #JavaPanama #OpenToWork
+

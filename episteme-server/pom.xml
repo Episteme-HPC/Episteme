@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>io.github.episteme-hcp</groupId>
+        <groupId>io.github.episteme-hpc</groupId>
         <artifactId>episteme-parent</artifactId>
         <version>${revision}</version>
     </parent>
@@ -88,28 +88,28 @@
 
         <!-- Core Episteme -->
         <dependency>
-            <groupId>io.github.episteme-hcp</groupId>
+            <groupId>io.github.episteme-hpc</groupId>
             <artifactId>episteme-core</artifactId>
             <version>${project.version}</version>
         </dependency>
 
         <!-- Episteme Natural (for loaders: FASTALoader, VizieRLoader) -->
         <dependency>
-            <groupId>io.github.episteme-hcp</groupId>
+            <groupId>io.github.episteme-hpc</groupId>
             <artifactId>episteme-natural</artifactId>
             <version>${project.version}</version>
         </dependency>
 
         <!-- Episteme Social (for WorldBank and Economic Tools) -->
         <dependency>
-            <groupId>io.github.episteme-hcp</groupId>
+            <groupId>io.github.episteme-hpc</groupId>
             <artifactId>episteme-social</artifactId>
             <version>${project.version}</version>
         </dependency>
 
         <!-- Episteme Native (for Panama FFM and SIMD backends) -->
         <dependency>
-            <groupId>io.github.episteme-hcp</groupId>
+            <groupId>io.github.episteme-hpc</groupId>
             <artifactId>episteme-native</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -360,7 +360,7 @@
                         <configuration>
                             <outputDirectory>${project.build.directory}/lib</outputDirectory>
                             <includeScope>runtime</includeScope>
-                            <excludeGroupIds>io.github.episteme-hcp</excludeGroupIds>
+                            <excludeGroupIds>io.github.episteme-hpc</excludeGroupIds>
                         </configuration>
                     </execution>
                 </executions>
@@ -460,3 +460,4 @@
         </profile>
     </profiles>
 </project>
+

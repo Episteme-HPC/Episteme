@@ -23,7 +23,8 @@ Episteme is now in beta. Our goal is to unify natural and social sciences throug
 
 **I am also currently looking for full-time opportunities** where I can apply my experience in building large-scale scientific systems and leveraging AI to accelerate the software lifecycle. If your team is pushing the boundaries of what's possible, I'd love to connect.
 
-Explore the project: [GitHub - Episteme](https://github.com/Episteme-HCP/Episteme)
+Explore the project: [GitHub - Episteme](https://github.com/episteme-hpc/Episteme)
 
 ---
 *Built with Antigravity.*
+

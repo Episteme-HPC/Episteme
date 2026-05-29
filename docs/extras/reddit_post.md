@@ -18,8 +18,9 @@ Meet **Episteme**—a unified scientific computing framework for Java 21/25.
 *   Plug-and-play compute backends (CUDA, OpenCL).
 *   Fully internationalized (EN, FR, DE, ES, ZN).
 
-**Check it out at:** [https://github.com/Episteme-HCP/Episteme](https://github.com/Episteme-HCP/Episteme)
+**Check it out at:** [https://github.com/episteme-hpc/Episteme](https://github.com/episteme-hpc/Episteme)
 
 I'm also looking for a full-time software engineering role where I can push the boundaries of HPC and AI. If you're hiring, let's chat!
 
 *Built with Antigravity.*
+

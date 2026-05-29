@@ -10,7 +10,7 @@ dockerfile: docker/Dockerfile.huggingface
 
 # 🌌 Episteme: The Unified Scientific Computing Framework
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/Episteme-HCP/Episteme)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/episteme-hpc/Episteme)
 [![Java Version](https://img.shields.io/badge/Java-21%2B%20%2F%2025-blue)](https://www.oracle.com/java/technologies/downloads/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Built with Antigravity](https://img.shields.io/badge/Built%20with-Antigravity-6f42c1)](https://deepmind.google/technologies/antigravity/)
@@ -97,7 +97,7 @@ If you are impressed by the scale and quality of Episteme and are looking for a 
 Add Episteme to your `pom.xml`:
 ```xml
 <dependency>
-    <groupId>io.github.episteme-hcp</groupId>
+    <groupId>io.github.episteme-hpc</groupId>
     <artifactId>episteme-core</artifactId>
     <version>1.0.0-beta3</version>
 </dependency>
@@ -164,7 +164,7 @@ See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for complete design.
 
 ## Documentation
 
-- 📚 **Online API Javadoc**: [https://episteme-hcp.github.io/Episteme/javadoc/index.html](https://episteme-hcp.github.io/Episteme/javadoc/index.html)
+- 📚 **Online API Javadoc**: [https://episteme-hpc.github.io/Episteme/javadoc/index.html](https://episteme-hpc.github.io/Episteme/javadoc/index.html)
 - [Architecture Guide](docs/ARCHITECTURE.md)
 - [Mathematical Concepts](docs/VISION.md)
 - [API Reference](docs/REST_API.md)
@@ -192,3 +192,4 @@ MIT License - see [LICENSE](LICENSE) file.
 We welcome contributions!---
 
 *© 2025-2026 Silvere Martin-Michiellot. Built with Antigravity.*
+
