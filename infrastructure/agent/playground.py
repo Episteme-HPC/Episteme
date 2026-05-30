@@ -120,57 +120,144 @@ def convert_units(value: Union[float, str], from_unit: str = None, to_unit: str 
 
 @tool
 def get_constant(name: str, precision: Union[int, str] = None):
-    """Retrieve scientific constants (e.g., PI, G, SPEED_OF_LIGHT, EARTH_RADIUS). Can accept an optional precision (e.g., 500) for arbitrary precision constants like PI."""
+    """Retrieve scientific and mathematical constants (e.g., PI, E, GOLDEN_RATIO, EULER_GAMMA, SPEED_OF_LIGHT, EARTH_RADIUS). Can accept an optional precision (e.g., 500) for arbitrary precision constants."""
     name = clean_text(name).upper()
     
-    # Check if we need high-precision Pi
-    if "PI" in name and precision is not None:
+    if precision is not None:
         try:
             prec = int(precision)
         except Exception:
             prec = 0
             
         if prec > 15:
-            # 1. Try to fetch from a well-known public API
+            # Try using mpmath for generic high precision constants
             try:
-                url = f"https://api.pi.delivery/v1/pi?numberOfDigits={prec}"
-                res = httpx.get(url, timeout=5.0)
-                if res.status_code == 200:
-                    digits = res.json().get("content", "")
-                    if digits:
-                        return f"PI to {prec} decimal places (loaded from pi.delivery): 3.{digits}"
+                import mpmath
+                mpmath.mp.dps = prec + 5
+                val = None
+                label = ""
+                
+                if "PI" in name or name == "π":
+                    val = mpmath.pi
+                    label = "PI (π)"
+                elif name == "E" or "EXP" in name:
+                    val = mpmath.e
+                    label = "Euler's number (e)"
+                elif "GOLDEN" in name or "PHI" in name or name == "ϕ":
+                    val = mpmath.phi
+                    label = "Golden Ratio (φ)"
+                elif "EULER" in name or "GAMMA" in name or name == "γ":
+                    val = mpmath.euler
+                    label = "Euler-Mascheroni Constant (γ)"
+                elif "LN2" in name or "LN_2" in name:
+                    val = mpmath.ln(2)
+                    label = "Natural logarithm of 2 (ln(2))"
+                elif "CATALAN" in name:
+                    val = mpmath.catalan
+                    label = "Catalan's Constant"
+                    
+                if val is not None:
+                    res_str = mpmath.nstr(val, prec)
+                    return f"### {label} to {prec} decimal places\n\n`{res_str}`"
             except Exception:
                 pass
                 
-            # 2. Fallback: Recompute locally using high-performance Machin-like series in arbitrary precision
-            try:
-                from decimal import Decimal, getcontext
-                getcontext().prec = prec + 10
-                
-                # Machin's formula: pi/4 = 4 * arctan(1/5) - arctan(1/239) => pi = 16 * arctan(1/5) - 4 * arctan(1/239)
-                def arctan(x_val):
-                    x = Decimal(x_val)
-                    power = x
-                    result = x
-                    sign = -1
-                    i = 3
-                    while True:
-                        power *= x * x
-                        term = power / Decimal(i)
+            # Local high-precision fallbacks in case mpmath is not loaded
+            if "PI" in name or name == "π":
+                # 1. Try to fetch from a well-known public API
+                try:
+                    url = f"https://api.pi.delivery/v1/pi?numberOfDigits={prec}"
+                    res = httpx.get(url, timeout=5.0)
+                    if res.status_code == 200:
+                        digits = res.json().get("content", "")
+                        if digits:
+                            return f"### PI to {prec} decimal places (loaded from pi.delivery)\n\n`3.{digits}`"
+                except Exception:
+                    pass
+                    
+                # 2. Fallback: Recompute locally using high-performance Machin-like series in arbitrary precision
+                try:
+                    from decimal import Decimal, getcontext
+                    getcontext().prec = prec + 10
+                    
+                    def arctan(x_val):
+                        x = Decimal(x_val)
+                        power = x
+                        result = x
+                        sign = -1
+                        i = 3
+                        while True:
+                            power *= x * x
+                            term = power / Decimal(i)
+                            if term == Decimal(0):
+                                break
+                            result += Decimal(sign) * term
+                            sign = -sign
+                            i += 2
+                        return result
+                        
+                    pi_val = 16 * arctan(Decimal("0.2")) - 4 * arctan(Decimal("1") / Decimal("239"))
+                    pi_str = str(pi_val)[:prec+2] # +2 for "3."
+                    return f"### PI to {prec} decimal places (recomputed locally via Machin series)\n\n`{pi_str}`"
+                except Exception as e:
+                    return f"Error computing high-precision PI: {str(e)}"
+                    
+            elif name == "E" or "EXP" in name:
+                try:
+                    from decimal import Decimal, getcontext
+                    getcontext().prec = prec + 10
+                    e_val = Decimal(1)
+                    factorial = Decimal(1)
+                    for i in range(1, prec + 50):
+                        factorial *= Decimal(i)
+                        term = Decimal(1) / factorial
                         if term == Decimal(0):
                             break
-                        result += Decimal(sign) * term
-                        sign = -sign
-                        i += 2
-                    return result
+                        e_val += term
+                    e_str = str(e_val)[:prec+2]
+                    return f"### Euler's number (e) to {prec} decimal places (recomputed locally via exponential series)\n\n`{e_str}`"
+                except Exception as e:
+                    return f"Error computing high-precision E: {str(e)}"
                     
-                pi_val = 16 * arctan(Decimal("0.2")) - 4 * arctan(Decimal("1") / Decimal("239"))
-                pi_str = str(pi_val)[:prec+2] # +2 for "3."
-                return f"PI to {prec} decimal places (recomputed via Machin series): {pi_str}"
-            except Exception as e:
-                return f"Error computing high-precision PI: {str(e)}"
-                
     return client.call("tools/call", {"name": "get_constant", "arguments": {"name": name}})
+
+@tool
+def calculate_series_expansion(expression: str, variable: str = "x", point: Union[float, str] = 0, order: Union[int, str] = 6):
+    """Compute the symbolic Taylor or Maclaurin series expansion of a mathematical expression (e.g., 'sin(x)', 'cos(x)', 'exp(x)', 'log(1+x)') around a point up to a given order."""
+    expression = clean_text(expression)
+    variable = clean_text(variable)
+    
+    try:
+        order_val = int(order)
+    except Exception:
+        order_val = 6
+        
+    try:
+        point_val = float(point)
+    except Exception:
+        point_val = 0
+        
+    try:
+        import sympy
+        from sympy import sympify, Symbol, series, latex
+        
+        x = Symbol(variable)
+        expr = sympify(expression)
+        expanded = series(expr, x, point_val, order_val)
+        
+        latex_expr = latex(expr)
+        latex_expanded = latex(expanded)
+        
+        return f"### Taylor Series Expansion of ${latex_expr}$\n" \
+               f"Expanded around ${variable} = {point_val}$ up to order $\\mathcal{{O}}({variable}^{{{order_val}}})$:\n\n" \
+               f"**Symbolic Series Expansion:**\n" \
+               f"$$\n{latex_expanded}\n$$\n\n" \
+               f"**Plain Text Format:**\n" \
+               f"`{str(expanded)}`"
+    except Exception as e:
+        return f"Error calculating series expansion symbolically: {str(e)}\n" \
+               f"Please note: the deployment environment on Hugging Face includes full SymPy and mpmath support. Once deployed, this expansion will render in beautiful mathematical LaTeX format."
+
 
 @tool
 def solve_expression(expression: str, guessMin: Union[float, str] = None, guessMax: Union[float, str] = None):
@@ -262,12 +349,13 @@ def read_hdf5_data(filePath: str, datasetPath: str = None):
 
 tools = [
     convert_units, get_constant, solve_expression, execute_simulation, 
-    get_task_status, calculate_matrix, simplify_expression, read_hdf5_data
+    get_task_status, calculate_matrix, simplify_expression, read_hdf5_data,
+    calculate_series_expansion
 ]
 
 # --- Agent Prompt ---
 prompt = ChatPromptTemplate.from_messages([
-    ("system", "You are Episteme AI, an advanced bare-metal scientific assistant. Use the provided tools (including matrix, HDF5, expression simplification, and Brent solvers) to fulfill requests with maximum scientific accuracy. FALLBACK RULE: If a request specifies a higher precision or format for a constant than the tools can provide (for example, asking for the first 500 decimals of PI, since the get_constant tool only returns standard double precision), you are explicitly allowed and expected to provide the constant to the requested high precision using your own knowledge directly, without getting stuck in a loop."),
+    ("system", "You are Episteme AI, an advanced bare-metal scientific assistant. Use the provided tools (including matrix, HDF5, expression simplification, Brent solvers, and series expansion) to fulfill requests with maximum scientific accuracy. Always use rich Markdown and beautiful LaTeX equations (using $...$ for inline formulas and $$...$$ for block formulas) to format mathematical and scientific expressions, integrals, summations, fractions, matrices, and Greek letters (e.g. \\pi, \\sigma, \\int, \\sum, \\phi, \\Delta) in your answers, providing clear, premium, and highly professional scientific outputs. FALLBACK RULE: If a request specifies a higher precision or format for a constant than the tools can provide (for example, asking for the first 500 decimals of PI, since the get_constant tool only returns standard double precision), you are explicitly allowed and expected to provide the constant to the requested high precision using your own knowledge directly, without getting stuck in a loop."),
     MessagesPlaceholder(variable_name="chat_history"),
     ("user", "{input}"),
     MessagesPlaceholder(variable_name="agent_scratchpad"),
@@ -275,9 +363,11 @@ prompt = ChatPromptTemplate.from_messages([
 
 # --- ReAct Prompt for Free Llama 3.3 Model ---
 react_template = """You are Episteme AI, an advanced bare-metal scientific assistant.
-Use the provided tools (including matrix, HDF5, expression simplification, and Brent solvers) to fulfill requests with maximum scientific accuracy.
+Use the provided tools (including matrix, HDF5, expression simplification, Brent solvers, and series expansion) to fulfill requests with maximum scientific accuracy.
 
-IMPORTANT: Do NOT write raw Python code blocks or use '<|python_tag|>'. If a scientific operation (matrix calculation, root-finding/solving, constant retrieval, unit conversion, simulation) is needed, you MUST call the appropriate tool from the list below.
+Always use rich Markdown and beautiful LaTeX equations (using $...$ for inline formulas and $$...$$ for block formulas) to format mathematical and scientific expressions, integrals, summations, fractions, matrices, and Greek letters (e.g. \\pi, \\sigma, \\int, \\sum, \\phi, \\Delta) in your Final Answer, providing clear, premium, and highly professional scientific outputs.
+
+IMPORTANT: Do NOT write raw Python code blocks or use '<|python_tag|>'. If a scientific operation (matrix calculation, root-finding/solving, constant retrieval, unit conversion, simulation, series expansion) is needed, you MUST call the appropriate tool from the list below.
 
 FALLBACK RULE: If a request specifies a higher precision or format for a constant than the tools can provide (for example, asking for the first 500 decimals of PI, since the get_constant tool only returns standard double precision), you are explicitly allowed and expected to provide the constant to the requested high precision using your own knowledge directly in your Final Answer, without getting stuck in a loop.
 

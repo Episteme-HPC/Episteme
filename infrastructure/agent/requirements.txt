@@ -4,3 +4,5 @@ gradio
 mcp
 httpx
 python-dotenv
+sympy
+mpmath
