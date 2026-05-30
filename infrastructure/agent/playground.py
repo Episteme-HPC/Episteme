@@ -119,9 +119,57 @@ def convert_units(value: Union[float, str], from_unit: str = None, to_unit: str 
     return client.call("tools/call", {"name": "convert_units", "arguments": {"value": value, "from": from_unit, "to": to_unit}})
 
 @tool
-def get_constant(name: str):
-    """Retrieve scientific constants (e.g., PI, G, SPEED_OF_LIGHT, EARTH_RADIUS)."""
-    name = clean_text(name)
+def get_constant(name: str, precision: Union[int, str] = None):
+    """Retrieve scientific constants (e.g., PI, G, SPEED_OF_LIGHT, EARTH_RADIUS). Can accept an optional precision (e.g., 500) for arbitrary precision constants like PI."""
+    name = clean_text(name).upper()
+    
+    # Check if we need high-precision Pi
+    if "PI" in name and precision is not None:
+        try:
+            prec = int(precision)
+        except Exception:
+            prec = 0
+            
+        if prec > 15:
+            # 1. Try to fetch from a well-known public API
+            try:
+                url = f"https://api.pi.delivery/v1/pi?numberOfDigits={prec}"
+                res = httpx.get(url, timeout=5.0)
+                if res.status_code == 200:
+                    digits = res.json().get("content", "")
+                    if digits:
+                        return f"PI to {prec} decimal places (loaded from pi.delivery): 3.{digits}"
+            except Exception:
+                pass
+                
+            # 2. Fallback: Recompute locally using high-performance Machin-like series in arbitrary precision
+            try:
+                from decimal import Decimal, getcontext
+                getcontext().prec = prec + 10
+                
+                # Machin's formula: pi/4 = 4 * arctan(1/5) - arctan(1/239) => pi = 16 * arctan(1/5) - 4 * arctan(1/239)
+                def arctan(x_val):
+                    x = Decimal(x_val)
+                    power = x
+                    result = x
+                    sign = -1
+                    i = 3
+                    while True:
+                        power *= x * x
+                        term = power / Decimal(i)
+                        if term == Decimal(0):
+                            break
+                        result += Decimal(sign) * term
+                        sign = -sign
+                        i += 2
+                    return result
+                    
+                pi_val = 16 * arctan(Decimal("0.2")) - 4 * arctan(Decimal("1") / Decimal("239"))
+                pi_str = str(pi_val)[:prec+2] # +2 for "3."
+                return f"PI to {prec} decimal places (recomputed via Machin series): {pi_str}"
+            except Exception as e:
+                return f"Error computing high-precision PI: {str(e)}"
+                
     return client.call("tools/call", {"name": "get_constant", "arguments": {"name": name}})
 
 @tool
