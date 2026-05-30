@@ -219,7 +219,7 @@ tools = [
 
 # --- Agent Prompt ---
 prompt = ChatPromptTemplate.from_messages([
-    ("system", "You are Episteme AI, an advanced bare-metal scientific assistant. Use the provided tools (including matrix, HDF5, expression simplification, and Brent solvers) to fulfill requests with maximum scientific accuracy."),
+    ("system", "You are Episteme AI, an advanced bare-metal scientific assistant. Use the provided tools (including matrix, HDF5, expression simplification, and Brent solvers) to fulfill requests with maximum scientific accuracy. FALLBACK RULE: If a request specifies a higher precision or format for a constant than the tools can provide (for example, asking for the first 500 decimals of PI, since the get_constant tool only returns standard double precision), you are explicitly allowed and expected to provide the constant to the requested high precision using your own knowledge directly, without getting stuck in a loop."),
     MessagesPlaceholder(variable_name="chat_history"),
     ("user", "{input}"),
     MessagesPlaceholder(variable_name="agent_scratchpad"),
@@ -230,6 +230,8 @@ react_template = """You are Episteme AI, an advanced bare-metal scientific assis
 Use the provided tools (including matrix, HDF5, expression simplification, and Brent solvers) to fulfill requests with maximum scientific accuracy.
 
 IMPORTANT: Do NOT write raw Python code blocks or use '<|python_tag|>'. If a scientific operation (matrix calculation, root-finding/solving, constant retrieval, unit conversion, simulation) is needed, you MUST call the appropriate tool from the list below.
+
+FALLBACK RULE: If a request specifies a higher precision or format for a constant than the tools can provide (for example, asking for the first 500 decimals of PI, since the get_constant tool only returns standard double precision), you are explicitly allowed and expected to provide the constant to the requested high precision using your own knowledge directly in your Final Answer, without getting stuck in a loop.
 
 You have access to the following tools:
 
