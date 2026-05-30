@@ -79,6 +79,7 @@ Remove-Item -Path "agent" -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item -Path "docker" -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item -Path "Dockerfile" -Force -ErrorAction SilentlyContinue
 
+$env:GIT_LFS_SKIP_SMUDGE=1
 git checkout -f $currentBranch
 git branch -D $DEPLOY_BRANCH
 
