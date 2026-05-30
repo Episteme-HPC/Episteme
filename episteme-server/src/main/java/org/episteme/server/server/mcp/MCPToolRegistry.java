@@ -67,6 +67,9 @@ public class MCPToolRegistry {
         registerTool("execute_simulation", "Start a scientific simulation task",
             "{\"type\": \"object\", \"properties\": {\"simulationType\": {\"type\": \"string\", \"enum\": [\"FLUID\", \"NBODY\", \"SIR\", \"MIGRATION\"]}, \"parameters\": {\"type\": \"object\"}}, \"required\": [\"simulationType\"]}");
 
+        registerTool("calculate_series", "Compute Taylor or Maclaurin series expansion of functions (exp, sin, cos) using Episteme's native symbolic power series engine",
+            "{\"type\": \"object\", \"properties\": {\"function\": {\"type\": \"string\", \"enum\": [\"exp\", \"sin\", \"cos\"]}, \"order\": {\"type\": \"integer\"}}, \"required\": [\"function\", \"order\"]}");
+
         registerTool("get_task_status", "Check the status and result of a long-running task",
             "{\"type\": \"object\", \"properties\": {\"taskId\": {\"type\": \"string\"}}, \"required\": [\"taskId\"]}");
         

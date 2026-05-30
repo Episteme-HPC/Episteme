@@ -346,6 +346,8 @@ public class JSONRPCService {
                 resultJson = executeGetServerMetrics(response);
             } else if ("execute_simulation".equals(name)) {
                 resultJson = executeSimulation(params.get("arguments"), response);
+            } else if ("calculate_series".equals(name)) {
+                resultJson = executeCalculateSeries(params.get("arguments"), response);
             } else {
                 result.put("content", "Unknown tool name: " + name);
                 resultJson = mapper.writeValueAsString(response);
@@ -628,6 +630,46 @@ public class JSONRPCService {
         var resultNode = response.get("result");
         ((com.fasterxml.jackson.databind.node.ObjectNode)resultNode).put("content", 
             "Simulation " + type + " started successfully (Job ID: " + jobId + "). Use episteme://tasks/" + jobId + " to monitor status.");
+        return mapper.writeValueAsString(response);
+    }
+
+    private String executeCalculateSeries(JsonNode args, com.fasterxml.jackson.databind.node.ObjectNode response) throws IOException {
+        try {
+            String function = args.get("function").asText().toLowerCase();
+            int order = args.get("order").asInt();
+            if (order <= 0 || order > 100) {
+                return error(response.get("id"), -32001, "Order must be between 1 and 100.");
+            }
+            
+            org.episteme.core.mathematics.symbolic.Series<Real> series;
+            String label;
+            switch (function) {
+                case "exp" -> {
+                    series = org.episteme.core.mathematics.symbolic.Series.exp(order);
+                    label = "e^x";
+                }
+                case "sin" -> {
+                    series = org.episteme.core.mathematics.symbolic.Series.sin(order);
+                    label = "\\sin(x)";
+                }
+                case "cos" -> {
+                    series = org.episteme.core.mathematics.symbolic.Series.cos(order);
+                    label = "\\cos(x)";
+                }
+                default -> throw new IllegalArgumentException("Unknown function: " + function);
+            }
+            
+            String mathRepr = series.toString();
+            // Format nice clean MathJax representation
+            String latexRepr = mathRepr.replace("·", "").replace("x", "x");
+            
+            var resultNode = response.get("result");
+            ((com.fasterxml.jackson.databind.node.ObjectNode)resultNode).put("content", 
+                String.format("### Taylor Series Expansion of $%s$ (order %d) using Episteme's Native Symbolic Engine:\n\n$$%s + \\mathcal{O}(x^{%d})$$\n\nPlain text representation: `%s`", 
+                    label, order, latexRepr, order, mathRepr));
+        } catch (Exception e) {
+            return error(response.get("id"), -32001, "Series expansion failed: " + e.getMessage());
+        }
         return mapper.writeValueAsString(response);
     }
 

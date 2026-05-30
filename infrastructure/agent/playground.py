@@ -213,14 +213,31 @@ def read_hdf5_data(filePath: str, datasetPath: str = None):
     datasetPath = clean_text(datasetPath) if datasetPath else ""
     return client.call("tools/call", {"name": "read_hdf5_data", "arguments": {"filePath": filePath, "datasetPath": datasetPath}})
 
+@tool
+def calculate_series(function: str, order: Union[int, str] = 6):
+    """Compute Taylor or Maclaurin series expansion of functions (exp, sin, cos) using Episteme's native symbolic power series engine. Format: 'exp, 6'."""
+    if isinstance(function, str) and "," in function:
+        parts = [p.strip() for p in clean_text(function).split(",")]
+        if len(parts) >= 2:
+            function, order = parts[0], parts[1]
+
+    function = clean_text(function)
+    try:
+        order = int(order)
+    except:
+        order = 6
+
+    return client.call("tools/call", {"name": "calculate_series", "arguments": {"function": function, "order": order}})
+
 tools = [
     convert_units, get_constant, solve_expression, execute_simulation, 
-    get_task_status, calculate_matrix, simplify_expression, read_hdf5_data
+    get_task_status, calculate_matrix, simplify_expression, read_hdf5_data,
+    calculate_series
 ]
 
 # --- Agent Prompt ---
 prompt = ChatPromptTemplate.from_messages([
-    ("system", "You are Episteme AI, an advanced bare-metal scientific assistant. Use the provided tools (including matrix, HDF5, expression simplification, and Brent solvers) to fulfill requests with maximum scientific accuracy. Always use rich Markdown and beautiful LaTeX equations (using $...$ for inline formulas and $$...$$ for block formulas) to format mathematical and scientific expressions, integrals, summations, fractions, matrices, and Greek letters (e.g. \\pi, \\sigma, \\int, \\sum, \\phi, \\Delta) in your answers, providing clear, premium, and highly professional scientific outputs. FALLBACK RULE: If a request specifies a higher precision or format for a constant than the tools can provide (for example, asking for the first 500 decimals of PI, since the get_constant tool only returns standard double precision), you are explicitly allowed and expected to provide the constant to the requested high precision using your own knowledge directly, without getting stuck in a loop."),
+    ("system", "You are Episteme AI, an advanced bare-metal scientific assistant. Use the provided tools (including matrix, HDF5, expression simplification, Brent solvers, and series expansion) to fulfill requests with maximum scientific accuracy. Always use rich Markdown and beautiful LaTeX equations (using $...$ for inline formulas and $$...$$ for block formulas) to format mathematical and scientific expressions, integrals, summations, fractions, matrices, and Greek letters (e.g. \\pi, \\sigma, \\int, \\sum, \\phi, \\Delta) in your answers, providing clear, premium, and highly professional scientific outputs. FALLBACK RULE: If a request specifies a higher precision or format for a constant than the tools can provide (for example, asking for the first 500 decimals of PI, since the get_constant tool only returns standard double precision), you are explicitly allowed and expected to provide the constant to the requested high precision using your own knowledge directly, without getting stuck in a loop."),
     MessagesPlaceholder(variable_name="chat_history"),
     ("user", "{input}"),
     MessagesPlaceholder(variable_name="agent_scratchpad"),
@@ -228,11 +245,11 @@ prompt = ChatPromptTemplate.from_messages([
 
 # --- ReAct Prompt for Free Llama 3.3 Model ---
 react_template = """You are Episteme AI, an advanced bare-metal scientific assistant.
-Use the provided tools (including matrix, HDF5, expression simplification, and Brent solvers) to fulfill requests with maximum scientific accuracy.
+Use the provided tools (including matrix, HDF5, expression simplification, Brent solvers, and series expansion) to fulfill requests with maximum scientific accuracy.
 
 Always use rich Markdown and beautiful LaTeX equations (using $...$ for inline formulas and $$...$$ for block formulas) to format mathematical and scientific expressions, integrals, summations, fractions, matrices, and Greek letters (e.g. \\pi, \\sigma, \\int, \\sum, \\phi, \\Delta) in your Final Answer, providing clear, premium, and highly professional scientific outputs.
 
-IMPORTANT: Do NOT write raw Python code blocks or use '<|python_tag|>'. If a scientific operation (matrix calculation, root-finding/solving, constant retrieval, unit conversion, simulation) is needed, you MUST call the appropriate tool from the list below.
+IMPORTANT: Do NOT write raw Python code blocks or use '<|python_tag|>'. If a scientific operation (matrix calculation, root-finding/solving, constant retrieval, unit conversion, simulation, series expansion) is needed, you MUST call the appropriate tool from the list below.
 
 FALLBACK RULE: If a request specifies a higher precision or format for a constant than the tools can provide (for example, asking for the first 500 decimals of PI, since the get_constant tool only returns standard double precision), you are explicitly allowed and expected to provide the constant to the requested high precision using your own knowledge directly in your Final Answer, without getting stuck in a loop.
 
@@ -247,7 +264,7 @@ Thought: you should always think about what to do
 Action: the action to take, should be one of [{tool_names}]
 Action Input: the input to the action. Formatting rules:
   - For single-argument tools (e.g. get_constant, simplify_expression, get_task_status), provide just the raw value: e.g. SPEED_OF_LIGHT or (x^2 - 1)/(x - 1)
-  - For simple multi-argument tools (e.g. convert_units, solve_expression, read_hdf5_data), provide the arguments separated by commas: e.g. 2.0, meters, inches or cos(x) - x, 0.0, 1.0
+  - For simple multi-argument tools (e.g. convert_units, solve_expression, read_hdf5_data, calculate_series), provide the arguments separated by commas: e.g. 2.0, meters, inches or cos(x) - x, 0.0, 1.0 or exp, 6
   - For complex tools (e.g. execute_simulation, calculate_matrix), provide a single valid JSON object containing all the argument keys: e.g. {{"simulationType": "NBODY", "parameters": {{"bodies": 5, "g": 6.674e-11}}}}
 Observation: the result of the action
 ... (this Thought/Action/Action Input/Observation can repeat N times)
