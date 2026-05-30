@@ -229,15 +229,21 @@ def calculate_series(function: str, order: Union[int, str] = 6):
 
     return client.call("tools/call", {"name": "calculate_series", "arguments": {"function": function, "order": order}})
 
+@tool
+def run_hpc_benchmark(benchmarkType: str):
+    """Execute high-performance scientific benchmarks (SCALING for CPU multi-threading or MATRIX for native Panama FFM/Vector API acceleration)."""
+    benchmarkType = clean_text(benchmarkType).upper()
+    return client.call("tools/call", {"name": "run_hpc_benchmark", "arguments": {"benchmarkType": benchmarkType}})
+
 tools = [
     convert_units, get_constant, solve_expression, execute_simulation, 
     get_task_status, calculate_matrix, simplify_expression, read_hdf5_data,
-    calculate_series
+    calculate_series, run_hpc_benchmark
 ]
 
 # --- Agent Prompt ---
 prompt = ChatPromptTemplate.from_messages([
-    ("system", "You are Episteme AI, an advanced bare-metal scientific assistant. Use the provided tools (including matrix, HDF5, expression simplification, Brent solvers, and series expansion) to fulfill requests with maximum scientific accuracy. Always use rich Markdown and beautiful LaTeX equations (using $...$ for inline formulas and $$...$$ for block formulas) to format mathematical and scientific expressions, integrals, summations, fractions, matrices, and Greek letters (e.g. \\pi, \\sigma, \\int, \\sum, \\phi, \\Delta) in your answers, providing clear, premium, and highly professional scientific outputs. FALLBACK RULE: If a request specifies a higher precision or format for a constant than the tools can provide (for example, asking for the first 500 decimals of PI, since the get_constant tool only returns standard double precision), you are explicitly allowed and expected to provide the constant to the requested high precision using your own knowledge directly, without getting stuck in a loop."),
+    ("system", "You are Episteme AI, an advanced bare-metal scientific assistant. Use the provided tools (including matrix, HDF5, expression simplification, Brent solvers, series expansion, and HPC benchmarks) to fulfill requests with maximum scientific accuracy. Always use rich Markdown and beautiful LaTeX equations (using $...$ for inline formulas and $$...$$ for block formulas) to format mathematical and scientific expressions, integrals, summations, fractions, matrices, and Greek letters (e.g. \\pi, \\sigma, \\int, \\sum, \\phi, \\Delta) in your answers, providing clear, premium, and highly professional scientific outputs. FALLBACK RULE: If a request specifies a higher precision or format for a constant than the tools can provide (for example, asking for the first 500 decimals of PI, since the get_constant tool only returns standard double precision), you are explicitly allowed and expected to provide the constant to the requested high precision using your own knowledge directly, without getting stuck in a loop."),
     MessagesPlaceholder(variable_name="chat_history"),
     ("user", "{input}"),
     MessagesPlaceholder(variable_name="agent_scratchpad"),
@@ -245,11 +251,11 @@ prompt = ChatPromptTemplate.from_messages([
 
 # --- ReAct Prompt for Free Llama 3.3 Model ---
 react_template = """You are Episteme AI, an advanced bare-metal scientific assistant.
-Use the provided tools (including matrix, HDF5, expression simplification, Brent solvers, and series expansion) to fulfill requests with maximum scientific accuracy.
+Use the provided tools (including matrix, HDF5, expression simplification, Brent solvers, series expansion, and HPC benchmarks) to fulfill requests with maximum scientific accuracy.
 
 Always use rich Markdown and beautiful LaTeX equations (using $...$ for inline formulas and $$...$$ for block formulas) to format mathematical and scientific expressions, integrals, summations, fractions, matrices, and Greek letters (e.g. \\pi, \\sigma, \\int, \\sum, \\phi, \\Delta) in your Final Answer, providing clear, premium, and highly professional scientific outputs.
 
-IMPORTANT: Do NOT write raw Python code blocks or use '<|python_tag|>'. If a scientific operation (matrix calculation, root-finding/solving, constant retrieval, unit conversion, simulation, series expansion) is needed, you MUST call the appropriate tool from the list below.
+IMPORTANT: Do NOT write raw Python code blocks or use '<|python_tag|>'. If a scientific operation (matrix calculation, root-finding/solving, constant retrieval, unit conversion, simulation, series expansion, scientific benchmark) is needed, you MUST call the appropriate tool from the list below.
 
 FALLBACK RULE: If a request specifies a higher precision or format for a constant than the tools can provide (for example, asking for the first 500 decimals of PI, since the get_constant tool only returns standard double precision), you are explicitly allowed and expected to provide the constant to the requested high precision using your own knowledge directly in your Final Answer, without getting stuck in a loop.
 
@@ -263,7 +269,7 @@ Question: the input question you must answer
 Thought: you should always think about what to do
 Action: the action to take, should be one of [{tool_names}]
 Action Input: the input to the action. Formatting rules:
-  - For single-argument tools (e.g. get_constant, simplify_expression, get_task_status), provide just the raw value: e.g. SPEED_OF_LIGHT or (x^2 - 1)/(x - 1)
+  - For single-argument tools (e.g. get_constant, simplify_expression, get_task_status, run_hpc_benchmark), provide just the raw value: e.g. SPEED_OF_LIGHT or (x^2 - 1)/(x - 1) or SCALING
   - For simple multi-argument tools (e.g. convert_units, solve_expression, read_hdf5_data, calculate_series), provide the arguments separated by commas: e.g. 2.0, meters, inches or cos(x) - x, 0.0, 1.0 or exp, 6
   - For complex tools (e.g. execute_simulation, calculate_matrix), provide a single valid JSON object containing all the argument keys: e.g. {{"simulationType": "NBODY", "parameters": {{"bodies": 5, "g": 6.674e-11}}}}
 Observation: the result of the action

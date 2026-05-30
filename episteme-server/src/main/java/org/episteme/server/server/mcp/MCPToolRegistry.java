@@ -73,6 +73,9 @@ public class MCPToolRegistry {
         registerTool("get_task_status", "Check the status and result of a long-running task",
             "{\"type\": \"object\", \"properties\": {\"taskId\": {\"type\": \"string\"}}, \"required\": [\"taskId\"]}");
         
+        registerTool("run_hpc_benchmark", "Execute high-performance scientific benchmarks (SCALING for CPU multi-threading or MATRIX for native Panama FFM/Vector API acceleration)",
+            "{\"type\": \"object\", \"properties\": {\"benchmarkType\": {\"type\": \"string\", \"enum\": [\"SCALING\", \"MATRIX\"]}}, \"required\": [\"benchmarkType\"]}");
+        
         /* 
         // Dynamic discovery of AlgorithmProviders is disabled for security on production (Hugging Face)
         // We favor explicit registration to ensure a rigid and audited contract.
