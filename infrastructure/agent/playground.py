@@ -297,10 +297,22 @@ def chat_fn(message, history, user_api_key, routing_config):
     try:
         if user_api_key.startswith("sk-"):
             # Paid Override: Custom OpenAI API Key -> Use GPT-4o-mini
-            llm = ChatOpenAI(model="gpt-4o-mini", temperature=0, openai_api_key=user_api_key)
+            llm = ChatOpenAI(
+                model="gpt-4o-mini",
+                temperature=0,
+                openai_api_key=user_api_key,
+                timeout=120.0,
+                max_retries=5
+            )
             provider_info = "⚡ *Running on OpenAI GPT-4o-mini (paid key override)*"
             agent = create_tool_calling_agent(llm, tools, prompt)
-            agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=False)
+            agent_executor = AgentExecutor(
+                agent=agent,
+                tools=tools,
+                verbose=False,
+                max_iterations=4,
+                early_stopping_method="generate"
+            )
             is_react = False
         else:
             # Free Mode: Use chosen routing model on Hugging Face Serverless API
@@ -342,11 +354,19 @@ def chat_fn(message, history, user_api_key, routing_config):
                 model=routing_model,
                 base_url=base_url,
                 openai_api_key=hf_token,
-                temperature=0
+                temperature=0,
+                timeout=120.0,
+                max_retries=5
             )
             provider_info = f"🍃 *Running on Free Hugging Face Serverless API ({model_display_name} - Provider: {provider_suffix})*"
             agent = create_react_agent(llm, tools, react_prompt)
-            agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=False)
+            agent_executor = AgentExecutor(
+                agent=agent,
+                tools=tools,
+                verbose=False,
+                max_iterations=4,
+                early_stopping_method="generate"
+            )
             is_react = True
         
         chat_history = []
