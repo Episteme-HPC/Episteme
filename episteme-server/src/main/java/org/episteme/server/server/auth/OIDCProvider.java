@@ -109,23 +109,28 @@ public class OIDCProvider {
 
             // Provider-specific role mapping
             if ("google".equalsIgnoreCase(provider)) {
-                if (email != null && email.endsWith("@admin.com")) {
-                    role = Roles.ADMIN;
-                    isAdmin = true;
-                } else {
-                    role = Roles.SCIENTIST;
-                }
+                role = Roles.SCIENTIST;
             } else if ("keycloak".equalsIgnoreCase(provider)) {
                 Map<String, Object> realmAccess = claims.getJSONObjectClaim("realm_access");
                 if (realmAccess != null && realmAccess.containsKey("roles")) {
-                    if (realmAccess.get("roles").toString().contains("SCIENTIST")) {
+                    String rolesStr = realmAccess.get("roles").toString();
+                    if (rolesStr.contains("ADMIN")) {
+                        role = Roles.ADMIN;
+                        isAdmin = true;
+                    } else if (rolesStr.contains("SCIENTIST")) {
                         role = Roles.SCIENTIST;
                     }
                 }
             } else if ("okta".equalsIgnoreCase(provider)) {
                 Object groups = claims.getClaim("groups");
-                if (groups != null && groups.toString().contains("scientist-group")) {
-                    role = Roles.SCIENTIST;
+                if (groups != null) {
+                    String groupsStr = groups.toString();
+                    if (groupsStr.contains("admin-group")) {
+                        role = Roles.ADMIN;
+                        isAdmin = true;
+                    } else if (groupsStr.contains("scientist-group")) {
+                        role = Roles.SCIENTIST;
+                    }
                 }
             }
 

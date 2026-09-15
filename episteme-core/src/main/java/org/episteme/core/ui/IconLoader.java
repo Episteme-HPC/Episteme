@@ -54,33 +54,29 @@ public class IconLoader {
         try {
             // Load SVG from resources
             String path = "/org/episteme/core/ui/icons/" + name + ".svg";
-            InputStream is = IconLoader.class.getResourceAsStream(path);
-            if (is == null) {
-                System.err.println("Icon not found: " + path);
-                return new javafx.scene.shape.Rectangle(size, size, Color.TRANSPARENT); // Placeholder
+            try (InputStream is = IconLoader.class.getResourceAsStream(path)) {
+                if (is == null) {
+                    return new javafx.scene.shape.Rectangle(size, size, Color.TRANSPARENT); // Placeholder
+                }
+
+                DocumentBuilderFactory factory = org.episteme.core.io.SecureXMLFactory.createSecureDocumentBuilderFactory();
+                DocumentBuilder builder = factory.newDocumentBuilder();
+                Document doc = builder.parse(is);
+                Element root = doc.getDocumentElement();
+
+                Group iconGroup = new Group();
+                List<Node> shapes = parseElement(root);
+                iconGroup.getChildren().addAll(shapes);
+
+                // Lucide icons are usually 24x24 viewBox.
+                // Scale to requested size.
+                double scale = size / 24.0;
+                iconGroup.setScaleX(scale);
+                iconGroup.setScaleY(scale);
+
+                return iconGroup;
             }
-
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Document doc = builder.parse(is);
-            Element root = doc.getDocumentElement();
-
-            Group iconGroup = new Group();
-            List<Node> shapes = parseElement(root);
-            iconGroup.getChildren().addAll(shapes);
-
-            // Lucide icons are usually 24x24 viewBox.
-            // Scale to requested size.
-            double scale = size / 24.0;
-            iconGroup.setScaleX(scale);
-            iconGroup.setScaleY(scale);
-
-            // Group doesn't have intrinsic size, wrapping in a Pane is safer for layout?
-            // But Group is fine for Graphic.
-            return iconGroup;
-
         } catch (Exception e) {
-            e.printStackTrace();
             return new javafx.scene.shape.Rectangle(size, size, Color.RED);
         }
     }

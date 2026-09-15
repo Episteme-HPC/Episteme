@@ -562,10 +562,9 @@ public abstract class BinaryCodedGA {
         boolean[] individual = null;
 
         if (isBinary) {
-            ObjectInputStream in = new ObjectInputStream(new FileInputStream(fileName));
-            individual = (boolean[]) in.readObject();
-            in.close();
-        } else {
+            try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(fileName))) {
+                individual = (boolean[]) in.readObject();
+            }
         }
 
         return individual;

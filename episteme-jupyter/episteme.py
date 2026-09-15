@@ -25,7 +25,7 @@ class EpistemeClient:
         if username == "admin" and password == "admin":
             self.token = "mock-jwt-token"
             print("✅ Login successful")
-            returnTrue
+            return True
         print("❌ Login failed")
         return False
 

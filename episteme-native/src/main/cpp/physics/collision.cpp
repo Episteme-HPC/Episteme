@@ -105,6 +105,8 @@ extern "C" {
             v2[1] += (1 / m2) * impulseY;
             v2[2] += (1 / m2) * impulseZ;
         }
+    }
+
     /**
      * Performs collision detection between spheres (float).
      */

@@ -232,10 +232,15 @@ public class CheckpointManager {
         return checkpoints.size();
     }
 
-    // --- Private helpers ---
-
     private Path getCheckpointPath(String taskId) {
-        return checkpointDir.resolve(taskId + ".checkpoint");
+        if (taskId == null || taskId.contains("..") || taskId.contains("/") || taskId.contains("\\")) {
+            throw new IllegalArgumentException("Invalid taskId for checkpoint: " + taskId);
+        }
+        Path path = checkpointDir.resolve(taskId + ".checkpoint").normalize();
+        if (!path.startsWith(checkpointDir.normalize())) {
+            throw new SecurityException("Access denied: Checkpoint path escapes base directory.");
+        }
+        return path;
     }
     
     private String getS3Key(String taskId) {

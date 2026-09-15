@@ -90,20 +90,17 @@ public class JSONRPCService {
      * Prevents Path Traversal attacks.
      */
     private File validateSafePath(String requestedPath) throws IOException {
-        File root = new File(dataRoot).getCanonicalFile();
-        File requested;
-        
-        File file = new File(requestedPath);
-        if (file.isAbsolute()) {
-            requested = file.getCanonicalFile();
-        } else {
-            requested = new File(root, requestedPath).getCanonicalFile();
+        java.nio.file.Path rootPath = java.nio.file.Paths.get(dataRoot).toAbsolutePath().normalize();
+        java.nio.file.Path requested = java.nio.file.Paths.get(requestedPath);
+        if (!requested.isAbsolute()) {
+            requested = rootPath.resolve(requested);
         }
+        requested = requested.toAbsolutePath().normalize();
 
-        if (!requested.getPath().startsWith(root.getPath())) {
+        if (!requested.startsWith(rootPath)) {
             throw new SecurityException("Access denied: Path is outside the data root directory.");
         }
-        return requested;
+        return requested.toFile();
     }
 
     private void saveTask(TaskState state) {

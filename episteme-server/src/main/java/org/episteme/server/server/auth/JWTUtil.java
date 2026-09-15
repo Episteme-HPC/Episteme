@@ -35,9 +35,32 @@ import javax.crypto.SecretKey;
  * @since 1.0
  */
 public class JWTUtil {
-    private static final SecretKey SECRET_KEY = Keys.hmacShaKeyFor(
-            "Episteme-Super-Secret-Key-For-JWT-2024!".getBytes());
+    private static volatile SecretKey secretKey = initSecretKey();
     private static final long EXPIRATION_MS = 3600000; // 1 hour
+
+    private static SecretKey initSecretKey() {
+        String secret = System.getenv("JWT_SECRET");
+        if (secret == null || secret.isBlank()) {
+            secret = System.getProperty("security.jwt.secret");
+        }
+        if (secret == null || secret.isBlank()) {
+            try {
+                secret = org.episteme.core.io.Configuration.get("security.jwt.secret");
+            } catch (Throwable ignored) {
+            }
+        }
+        if (secret == null || secret.isBlank() || secret.length() < 32) {
+            // Default 256-bit key for dev/fallback if none configured
+            secret = "Episteme-Production-Secure-256Bit-JWT-Key-2026-Strict!";
+        }
+        return Keys.hmacShaKeyFor(secret.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    }
+
+    public static void setSecret(String secret) {
+        if (secret != null && secret.length() >= 32) {
+            secretKey = Keys.hmacShaKeyFor(secret.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        }
+    }
 
     public static String generateToken(String username, String role) {
         return Jwts.builder()
@@ -45,14 +68,14 @@ public class JWTUtil {
                 .claim("role", role)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + EXPIRATION_MS))
-                .signWith(SECRET_KEY)
+                .signWith(secretKey)
                 .compact();
     }
 
     public static String validateAndGetUsername(String token) {
         try {
             return Jwts.parser()
-                    .verifyWith(SECRET_KEY)
+                    .verifyWith(secretKey)
                     .build()
                     .parseSignedClaims(token)
                     .getPayload()
@@ -65,7 +88,7 @@ public class JWTUtil {
     public static String getRole(String token) {
         try {
             return Jwts.parser()
-                    .verifyWith(SECRET_KEY)
+                    .verifyWith(secretKey)
                     .build()
                     .parseSignedClaims(token)
                     .getPayload()

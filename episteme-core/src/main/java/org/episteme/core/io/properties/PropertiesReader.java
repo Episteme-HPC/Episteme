@@ -43,7 +43,7 @@ public class PropertiesReader {
     // Aggressive touch for IDE re-indexing
 
     private static final ObjectMapper mapper = new ObjectMapper();
-    private static final Map<String, PropertySet> cache = new HashMap<>();
+    private static final Map<String, PropertySet> cache = new java.util.concurrent.ConcurrentHashMap<>();
 
     /**
      * Loads properties for a specific item from a JSON resource.

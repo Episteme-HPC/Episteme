@@ -39,9 +39,9 @@ spec:
               memory: "8Gi"
           livenessProbe:
             exec:
-              command: ["cat", "/tmp/healthy"]
-            initialDelaySeconds: 10
-            periodSeconds: 5
+              command: ["sh", "-c", "pgrep -f WorkerNode || exit 1"]
+            initialDelaySeconds: 15
+            periodSeconds: 10
 ---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler

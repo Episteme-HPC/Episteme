@@ -56,7 +56,7 @@ public class DataServiceImpl extends DataServiceGrpc.DataServiceImplBase {
     private String genomeDataDir;
 
     /** Cache loaded genome sequences for performance */
-    private final Map<String, String> genomeCache = new HashMap<>();
+    private final Map<String, String> genomeCache = new java.util.concurrent.ConcurrentHashMap<>();
 
     @Override
     public void streamGenomeData(GenomeRegionRequest request, StreamObserver<GenomeChunk> responseObserver) {
@@ -97,7 +97,6 @@ public class DataServiceImpl extends DataServiceGrpc.DataServiceImplBase {
                 responseObserver.onNext(chunk);
 
                 current = chunkEnd;
-                Thread.sleep(10); // Small delay for streaming effect
             }
 
             responseObserver.onCompleted();

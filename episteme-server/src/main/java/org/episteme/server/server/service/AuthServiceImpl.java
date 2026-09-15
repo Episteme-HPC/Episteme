@@ -27,6 +27,7 @@ import io.grpc.stub.StreamObserver;
 import net.devh.boot.grpc.server.service.GrpcService;
 import org.episteme.server.server.auth.JWTUtil;
 import org.episteme.server.server.auth.OIDCProvider;
+import org.episteme.server.server.auth.Roles;
 import org.episteme.server.server.model.User;
 import org.episteme.server.server.proto.*;
 import org.episteme.server.server.repository.UserRepository;
@@ -57,7 +58,6 @@ public class AuthServiceImpl extends AuthServiceGrpc.AuthServiceImplBase {
         String username = request.getUsername();
         String password = request.getPassword();
         String role = request.getRole();
-
         // Check if user already exists
         if (userRepository.findByUsername(username).isPresent()) {
             responseObserver.onNext(AuthResponse.newBuilder()
@@ -68,13 +68,19 @@ public class AuthServiceImpl extends AuthServiceGrpc.AuthServiceImplBase {
             return;
         }
 
+        // Enforce safe default role: never allow self-registering as ADMIN or ROOT
+        String assignedRole = Roles.SCIENTIST;
+        if (Roles.VIEWER.equalsIgnoreCase(role)) {
+            assignedRole = Roles.VIEWER;
+        }
+
         // Hash password
         String hashedPassword = hashPassword(password);
-        User newUser = new User(username, hashedPassword, role);
+        User newUser = new User(username, hashedPassword, assignedRole);
         userRepository.save(newUser);
-        LOG.info("Registered new user: {} with role: {}", username, role);
+        LOG.info("Registered new user: {} with role: {}", username, assignedRole);
 
-        String token = JWTUtil.generateToken(username, role);
+        String token = JWTUtil.generateToken(username, assignedRole);
         responseObserver.onNext(AuthResponse.newBuilder()
                 .setSuccess(true)
                 .setToken(token)

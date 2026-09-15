@@ -420,18 +420,10 @@ public class CMLUtils {
      */
     public static void copyFile(File inFile, File outFile)
             throws FileNotFoundException, IOException {
-        BufferedInputStream bis = new BufferedInputStream(new FileInputStream(inFile));
-        BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(outFile));
-        byte[] buffer = new byte[10000];
-        while (true) {
-            int b = bis.read(buffer);
-            if (b == -1) {
-                break;
-            }
-            bos.write(buffer, 0, b);
+        try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(inFile));
+             BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(outFile))) {
+            bis.transferTo(bos);
         }
-        bis.close();
-        bos.close();
     }
 
     /**
@@ -1842,8 +1834,9 @@ public class CMLUtils {
      */
     public static byte[] readByteArray(String filename)
             throws FileNotFoundException, IOException {
-        DataInputStream dis = new DataInputStream(new FileInputStream(filename));
-        return CMLUtils.readByteArray(dis);
+        try (DataInputStream dis = new DataInputStream(new FileInputStream(filename))) {
+            return CMLUtils.readByteArray(dis);
+        }
     }
 
     /**

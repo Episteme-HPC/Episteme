@@ -39,13 +39,20 @@ import java.util.*;
  * @author Gemini AI (Google DeepMind)
  * @since 1.0
  */
-public class PersistenceManager {
+public class PersistenceManager implements AutoCloseable {
     private static final Logger logger = LoggerFactory.getLogger(PersistenceManager.class);
     private final Connection connection;
-    private final Map<Class<?>, String> tableNames = new HashMap<>();
+    private final Map<Class<?>, String> tableNames = new java.util.concurrent.ConcurrentHashMap<>();
 
     public PersistenceManager(String jdbcUrl, String user, String password) throws SQLException {
         this.connection = DriverManager.getConnection(jdbcUrl, user, password);
+    }
+
+    @Override
+    public void close() throws SQLException {
+        if (connection != null && !connection.isClosed()) {
+            connection.close();
+        }
     }
 
     /**

@@ -41,7 +41,7 @@ services:
   server:
     build:
       context: .
-      dockerfile: docker/Dockerfile.server
+      dockerfile: infrastructure/docker/Dockerfile.server
     container_name: episteme-server
     ports:
       - "50051:50051" # gRPC port
@@ -61,7 +61,7 @@ services:
   worker-1:
     build:
       context: .
-      dockerfile: docker/Dockerfile.worker
+      dockerfile: infrastructure/docker/Dockerfile.worker
     container_name: episteme-worker-1
     depends_on:
       server:
@@ -75,7 +75,7 @@ services:
   worker-2:
     build:
       context: .
-      dockerfile: docker/Dockerfile.worker
+      dockerfile: infrastructure/docker/Dockerfile.worker
     container_name: episteme-worker-2
     depends_on:
       server:
@@ -89,7 +89,7 @@ services:
   worker-3:
     build:
       context: .
-      dockerfile: docker/Dockerfile.worker
+      dockerfile: infrastructure/docker/Dockerfile.worker
     container_name: episteme-worker-3
     depends_on:
       server:
@@ -103,7 +103,7 @@ services:
   worker-4:
     build:
       context: .
-      dockerfile: docker/Dockerfile.worker
+      dockerfile: infrastructure/docker/Dockerfile.worker
     container_name: episteme-worker-4
     depends_on:
       server:
@@ -117,7 +117,7 @@ services:
   worker-5:
     build:
       context: .
-      dockerfile: docker/Dockerfile.worker
+      dockerfile: infrastructure/docker/Dockerfile.worker
     container_name: episteme-worker-5
     depends_on:
       server:
@@ -135,7 +135,7 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./infrastructure/docker/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus-data:/prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
