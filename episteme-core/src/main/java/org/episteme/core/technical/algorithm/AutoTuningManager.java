@@ -51,6 +51,20 @@ public class AutoTuningManager {
         }
     }
 
+    public static void registerResult(AutoTuningResult result) {
+        if (result != null && result.getProviderName() != null) {
+            RESULTS.put(result.getProviderName(), result);
+        }
+    }
+
+    public static void registerResults(Collection<AutoTuningResult> results) {
+        if (results != null) {
+            for (AutoTuningResult res : results) {
+                registerResult(res);
+            }
+        }
+    }
+
     public static void saveResults() {
         try {
             Path path = Paths.get(System.getProperty("user.home"), ".episteme", "autotuning_performance.json");
@@ -76,8 +90,32 @@ public class AutoTuningManager {
         // For JIT, we probably want it to persist.
     }
 
+    private static final java.util.concurrent.atomic.AtomicBoolean calibrating = new java.util.concurrent.atomic.AtomicBoolean(false);
+
     /**
-     * Calculates a dynamic score based on benchmark data.
+     * Triggers asynchronous background calibration if no cached profiles exist.
+     * Non-blocking, runs on a daemon thread with normal priority.
+     */
+    public static void ensureCalibratedAsync() {
+        if (getMode() == Mode.OFF || Boolean.getBoolean("episteme.benchmark.skip")) return;
+        if (RESULTS.isEmpty() && calibrating.compareAndSet(false, true)) {
+            Thread thread = new Thread(() -> {
+                try {
+                    AutoTuningRunner.runAll();
+                } catch (Throwable t) {
+                    logger.debug("Background auto-tuning calibration completed with notice: {}", t.getMessage());
+                } finally {
+                    calibrating.set(false);
+                }
+            }, "Episteme-AutoTuning-Calibrator");
+            thread.setDaemon(true);
+            thread.setPriority(Thread.NORM_PRIORITY - 1);
+            thread.start();
+        }
+    }
+
+    /**
+     * Calculates a dynamic score based on benchmark data with linear interpolation.
      * 
      * @param providerName name of the provider
      * @param dim dimensionality (e.g. matrix rows)
@@ -89,30 +127,61 @@ public class AutoTuningManager {
         
         Mode mode = getMode();
         if (mode == Mode.OFF) return defaultPriority;
+
+        // Auto trigger background calibration if cache is cold
+        if (RESULTS.isEmpty()) {
+            ensureCalibratedAsync();
+            return defaultPriority;
+        }
         
         AutoTuningResult res = RESULTS.get(providerName);
         if (res == null || res.getGflops() == null || res.getGflops().isEmpty()) {
             return defaultPriority;
         }
 
-        // Find nearest benchmarked size
         Map<Integer, Double> gflops = res.getGflops();
-        int nearestSize = -1;
-        int minDiff = Integer.MAX_VALUE;
-        for (int size : gflops.keySet()) {
-            int diff = Math.abs(size - dim);
-            if (diff < minDiff) {
-                minDiff = diff;
-                nearestSize = size;
+        if (dim <= 0) {
+            // Default size evaluation
+            double maxGflops = gflops.values().stream().mapToDouble(Double::doubleValue).max().orElse(0.0);
+            return defaultPriority + (maxGflops * 10.0);
+        }
+
+        // Interpolate performance
+        double perf;
+        if (gflops.containsKey(dim)) {
+            perf = gflops.get(dim);
+        } else {
+            // Find lower and upper bounds for linear interpolation
+            Integer lowerKey = null;
+            Integer upperKey = null;
+            List<Integer> sortedSizes = new ArrayList<>(gflops.keySet());
+            Collections.sort(sortedSizes);
+
+            for (int size : sortedSizes) {
+                if (size <= dim) {
+                    lowerKey = size;
+                } else if (upperKey == null) {
+                    upperKey = size;
+                }
+            }
+
+            if (lowerKey == null) {
+                perf = gflops.get(sortedSizes.get(0));
+            } else if (upperKey == null) {
+                perf = gflops.get(sortedSizes.get(sortedSizes.size() - 1));
+            } else {
+                double lowerGflops = gflops.get(lowerKey);
+                double upperGflops = gflops.get(upperKey);
+                double ratio = (double) (dim - lowerKey) / (double) (upperKey - lowerKey);
+                perf = lowerGflops + ratio * (upperGflops - lowerGflops);
             }
         }
 
-        if (nearestSize == -1) return defaultPriority;
+        // Penalty for boundary overhead on tiny matrices (dim < 32)
+        if (dim < 32 && (providerName.toLowerCase().contains("native") || providerName.toLowerCase().contains("openblas") || providerName.toLowerCase().contains("cuda"))) {
+            return Math.max(0, defaultPriority - 20.0);
+        }
 
-        // Convert GFLOPS to a priority-relative score.
-        // We use a logarithmic scale to keep scores within reasonable bounds.
-        // Base priority is shifted by GFLOPS * multiplier.
-        double perf = gflops.get(nearestSize);
-        return defaultPriority + (perf * 10.0); 
+        return defaultPriority + (perf * 10.0);
     }
 }

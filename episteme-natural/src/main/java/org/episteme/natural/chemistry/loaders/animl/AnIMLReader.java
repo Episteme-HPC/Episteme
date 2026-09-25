@@ -81,8 +81,7 @@ public class AnIMLReader {
      */
     public AnIMLDocument read(InputStream input) throws AnIMLException {
         try {
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            dbf.setNamespaceAware(true);
+            DocumentBuilderFactory dbf = org.episteme.core.io.SecureXMLFactory.createSecureNamespaceAwareDocumentBuilderFactory();
             DocumentBuilder db = dbf.newDocumentBuilder();
             Document doc = db.parse(input);
             return convertToDocument(doc.getDocumentElement());

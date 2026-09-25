@@ -59,7 +59,7 @@ public class PMRDocumentImpl extends PMRNodeImpl implements PMRDocument {
     protected PMRDocumentImpl() {
         try {
             pmrDocument = this;
-            delegateNode = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+            delegateNode = org.episteme.core.io.SecureXMLFactory.createSecureDocumentBuilder().newDocument();
         } catch (Exception e) {
             e.printStackTrace();
         }

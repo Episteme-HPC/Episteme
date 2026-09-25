@@ -128,10 +128,8 @@ public class OMDOMReader {
         if (mInputSource != null) {
             try {
                 DocumentBuilderFactory factory =
-                        DocumentBuilderFactory.newInstance();
-
+                        org.episteme.core.io.SecureXMLFactory.createSecureNamespaceAwareDocumentBuilderFactory();
                 factory.setIgnoringElementContentWhitespace(true);
-                factory.setNamespaceAware(true);
                 factory.setValidating(false);
 
                 DocumentBuilder builder = factory.newDocumentBuilder();

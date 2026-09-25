@@ -66,9 +66,7 @@ public class OMDOMWriter {
      */
     public OMDOMWriter() {
         try {
-            DocumentBuilder builder = DocumentBuilderFactory.newInstance()
-                                                            .newDocumentBuilder();
-
+            DocumentBuilder builder = org.episteme.core.io.SecureXMLFactory.createSecureDocumentBuilder();
             document = builder.newDocument();
         } catch (Exception exception) {
         }

@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 
 public class AutoTuningRunner {
     private static final Logger logger = LoggerFactory.getLogger(AutoTuningRunner.class);
-    private static final int[] SIZES = {128, 512, 1024};
+    private static final int[] SIZES = {64, 256, 512};
     private static final int WARMUP = 1;
     private static final int ITERATIONS = 2;
 
@@ -44,6 +44,10 @@ public class AutoTuningRunner {
                 logger.warn("  Failed to benchmark {}: {}", provider.getName(), t.getMessage());
             }
         }
+        
+        AutoTuningManager.registerResults(results);
+        AutoTuningManager.saveResults();
+        logger.info("Auto-Benchmark completed. Registered {} provider profiles.", results.size());
     }
 
     private static double benchmarkMultiply(LinearAlgebraProvider<Real> provider, int n) {

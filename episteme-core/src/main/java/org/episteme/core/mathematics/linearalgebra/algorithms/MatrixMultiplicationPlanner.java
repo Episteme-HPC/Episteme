@@ -53,12 +53,16 @@ public class MatrixMultiplicationPlanner {
             return (Matrix<E>) RealDoubleCARMAAlgorithm.multiply((SIMDRealDoubleMatrix) A, (SIMDRealDoubleMatrix) B);
         }
         
+        org.episteme.core.technical.algorithm.OperationContext opCtx = new org.episteme.core.technical.algorithm.OperationContext.Builder()
+                .dimensionality(n)
+                .dataSize((long) n * n)
+                .build();
         org.episteme.core.mathematics.structures.rings.Ring<E> ring = A.getScalarRing();
         
         if (n >= STRASSEN_THRESHOLD && isPowerOfTwo(n)) {
             LinearAlgebraProvider<E> leaf = (LinearAlgebraProvider<E>) org.episteme.core.technical.algorithm.ProviderSelector.select(
                 LinearAlgebraProvider.class,
-                org.episteme.core.technical.algorithm.OperationContext.DEFAULT,
+                opCtx,
                 p -> !(p instanceof org.episteme.core.mathematics.linearalgebra.providers.StrassenLinearAlgebraProvider) &&
                      !(p instanceof org.episteme.core.mathematics.linearalgebra.providers.CARMALinearAlgebraProvider) &&
                      (ring == null || ((LinearAlgebraProvider<?>)p).isCompatible(ring))
@@ -68,7 +72,7 @@ public class MatrixMultiplicationPlanner {
         
         org.episteme.core.mathematics.linearalgebra.LinearAlgebraProvider<E> leaf = (org.episteme.core.mathematics.linearalgebra.LinearAlgebraProvider<E>) org.episteme.core.technical.algorithm.ProviderSelector.select(
             org.episteme.core.mathematics.linearalgebra.LinearAlgebraProvider.class,
-            org.episteme.core.technical.algorithm.OperationContext.DEFAULT,
+            opCtx,
             p -> !(p instanceof org.episteme.core.mathematics.linearalgebra.providers.StrassenLinearAlgebraProvider) &&
                  !(p instanceof org.episteme.core.mathematics.linearalgebra.providers.CARMALinearAlgebraProvider) &&
                  (ring == null || p.isCompatible(ring))

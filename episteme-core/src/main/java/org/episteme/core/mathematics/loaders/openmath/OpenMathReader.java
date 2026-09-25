@@ -150,8 +150,7 @@ public class OpenMathReader extends AbstractResourceReader<Object> {
      */
     public Object read(InputStream input) throws OpenMathException {
         try {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setNamespaceAware(true);
+            DocumentBuilderFactory factory = org.episteme.core.io.SecureXMLFactory.createSecureNamespaceAwareDocumentBuilderFactory();
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document doc = builder.parse(input);
             return parseDocument(doc);

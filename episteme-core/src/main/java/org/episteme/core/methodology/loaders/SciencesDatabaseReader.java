@@ -123,8 +123,7 @@ public class SciencesDatabaseReader extends AbstractResourceReader<SciencesDatab
                 return list;
             }
 
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder = factory.newDocumentBuilder();
+            DocumentBuilder builder = org.episteme.core.io.SecureXMLFactory.createSecureDocumentBuilder();
             Document doc = builder.parse(is);
 
             NodeList scienceNodes = doc.getElementsByTagName("science");

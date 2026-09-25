@@ -56,8 +56,7 @@ public class MusicXMLReader extends CompositionLoader {
 
     @Override
     protected Composition loadFromInputStream(InputStream is, String id) throws Exception {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder builder = factory.newDocumentBuilder();
+        DocumentBuilder builder = org.episteme.core.io.SecureXMLFactory.createSecureDocumentBuilder();
         Document doc = builder.parse(is);
         Element root = doc.getDocumentElement();
         

@@ -149,9 +149,7 @@ public class MathMLReader extends AbstractResourceReader<MathMLDocument> {
      */
     public MathMLDocument read(InputStream input) throws MathMLException {
         try {
-            logger.debug("Parsing MathML document from input stream");
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setNamespaceAware(true);
+            DocumentBuilderFactory factory = org.episteme.core.io.SecureXMLFactory.createSecureNamespaceAwareDocumentBuilderFactory();
             DocumentBuilder builder = factory.newDocumentBuilder();
             
             // Parse into a standard DOM document first

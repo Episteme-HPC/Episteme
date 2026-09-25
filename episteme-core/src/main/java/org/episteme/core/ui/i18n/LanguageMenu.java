@@ -49,10 +49,10 @@ public class LanguageMenu extends Menu {
 
         // Add supported languages
         addLanguageItem("English (US)", Locale.US, langGroup);
-        addLanguageItem("FranÃƒÂ§ais (France)", Locale.FRANCE, langGroup);
-        addLanguageItem("Deutsch (Germany)", Locale.GERMANY, langGroup);
-        addLanguageItem("EspaÃƒÂ±ol (Spain)", new Locale.Builder().setLanguage("es").setRegion("ES").build(), langGroup);
-        addLanguageItem("Ã¤Â¸Â­Ã¦â€“â€¡ (China)", Locale.CHINA, langGroup);
+        addLanguageItem("Fran\u00e7ais (France)", Locale.FRANCE, langGroup);
+        addLanguageItem("Deutsch (Deutschland)", Locale.GERMANY, langGroup);
+        addLanguageItem("Espa\u00f1ol (Espa\u00f1a)", new Locale.Builder().setLanguage("es").setRegion("ES").build(), langGroup);
+        addLanguageItem("\u4e2d\u6587 (China)", Locale.CHINA, langGroup);
     }
 
     private void addLanguageItem(String text, Locale locale, ToggleGroup group) {

@@ -63,8 +63,7 @@ public final class AkomaNtosoLoader extends AbstractResourceReader<Statute> impl
 
     @Override
     protected Statute loadFromInputStream(InputStream is, String id) throws Exception {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder builder = factory.newDocumentBuilder();
+        DocumentBuilder builder = org.episteme.core.io.SecureXMLFactory.createSecureDocumentBuilder();
         Document doc = builder.parse(is);
         Element root = doc.getDocumentElement();
 

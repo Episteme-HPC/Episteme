@@ -93,10 +93,8 @@ public class XMLParser {
         }
         long time = System.currentTimeMillis();
         Document doc = null;
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-
         try {
-            DocumentBuilder builder = factory.newDocumentBuilder();
+            DocumentBuilder builder = org.episteme.core.io.SecureXMLFactory.createSecureDocumentBuilder();
             if (this.verbosity > 3) {
                 System.err.println("org.episteme.social.ml.tigerxml.core.XMLParser: Using XML parser of "
                         + builder.getClass());
